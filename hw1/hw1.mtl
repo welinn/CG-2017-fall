@@ -1,0 +1,8 @@
+newmtl box1
+  illum 1
+  map_Ka hw1-1.jpg
+
+newmtl box2
+  illum 1
+  map_Ka hw1-2.jpg
+
