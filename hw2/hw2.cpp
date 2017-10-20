@@ -4,6 +4,9 @@
 void animate();
 void resizeFunction(int, int);
 void drawObj();
+void cross(float*, glm::vec3, glm::vec3);
+float dot(glm::vec3, glm::vec3);
+void calculateVolume();
 
 int currentWidth, currentHeight;
 objects obj;
