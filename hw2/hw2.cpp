@@ -95,21 +95,17 @@ void drawObj(){
       glEnd();
 */
       glBegin(GL_LINES);
+
       glVertex3fv(&(obj.vertices[ obj.g[i].vertexIndices[j]-1 ].x));
       glVertex3fv(&(obj.vertices[ obj.g[i].vertexIndices[j + 1]-1 ].x));
+
       glVertex3fv(&(obj.vertices[ obj.g[i].vertexIndices[j + 1]-1 ].x));
       glVertex3fv(&(obj.vertices[ obj.g[i].vertexIndices[j + 2]-1 ].x));
+
       glVertex3fv(&(obj.vertices[ obj.g[i].vertexIndices[j]-1 ].x));
       glVertex3fv(&(obj.vertices[ obj.g[i].vertexIndices[j + 2]-1 ].x));
-      glEnd();
-/*
-      glBegin(GL_LINES);
-      glEnd();
-
-      glBegin(GL_LINES);
 
       glEnd();
-*/
     }
   }
 }
