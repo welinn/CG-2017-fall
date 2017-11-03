@@ -1,5 +1,5 @@
 //http://www.opengl-tutorial.org/beginners-tutorials/tutorial-7-model-loading/
-#include "loadObj.h"
+#include "object.h"
 
 objects getObjInfo(char* path){
 
@@ -10,7 +10,7 @@ objects getObjInfo(char* path){
   }
 
   objMeshs meshs;
-  objects obj;
+  objects obj ;
   char input[128];
   bool first = true;
   bool newMeshs = false;
@@ -137,4 +137,39 @@ objects getObjInfo(char* path){
   obj.g.push_back(meshs);
 
   return obj;
+}
+/*
+void setObjFun(objects *obj){
+
+  obj ->
+}
+*/
+void drawObj(objects obj){
+
+  int allObj = obj.g.size();
+
+  for(int i = 0; i < allObj; i++){
+    int allMesh = obj.g[i].vertexIndices.size();
+    for(int j = 0; j < allMesh; j += 3){
+      /*
+         glBegin(GL_TRIANGLES);
+         glVertex3fv(&(obj.vertices[ obj.g[i].vertexIndices[j]-1 ].x));
+         glVertex3fv(&(obj.vertices[ obj.g[i].vertexIndices[j + 1]-1 ].x));
+         glVertex3fv(&(obj.vertices[ obj.g[i].vertexIndices[j + 2]-1 ].x));
+         glEnd();
+       */
+      glBegin(GL_LINES);
+
+      glVertex3fv(&(obj.vertices[ obj.g[i].vertexIndices[j]-1 ].x));
+      glVertex3fv(&(obj.vertices[ obj.g[i].vertexIndices[j + 1]-1 ].x));
+
+      glVertex3fv(&(obj.vertices[ obj.g[i].vertexIndices[j + 1]-1 ].x));
+      glVertex3fv(&(obj.vertices[ obj.g[i].vertexIndices[j + 2]-1 ].x));
+
+      glVertex3fv(&(obj.vertices[ obj.g[i].vertexIndices[j]-1 ].x));
+      glVertex3fv(&(obj.vertices[ obj.g[i].vertexIndices[j + 2]-1 ].x));
+
+      glEnd();
+    }
+  }
 }

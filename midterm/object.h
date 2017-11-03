@@ -32,11 +32,15 @@ typedef struct {
 }objMeshs;
 
 typedef struct {
+
   vector<vColor> vecColor;
   vector<glm::vec3> vertices;
   vector<glm::vec2> uvs;
   vector<glm::vec3> normals;
   vector<objMeshs> g;
+
 }objects;
 
 objects getObjInfo(char*);
+void drawObj(objects);
+
