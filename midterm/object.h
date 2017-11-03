@@ -33,7 +33,8 @@ typedef struct {
 
 typedef struct {
 
-  vector<vColor> vecColor;
+  vector<glm::vec3> verNormal;
+  vector<vColor> verColor;
   vector<glm::vec3> vertices;
   vector<glm::vec2> uvs;
   vector<glm::vec3> normals;
@@ -42,5 +43,6 @@ typedef struct {
 }objects;
 
 objects getObjInfo(char*);
-void drawObj(objects);
-
+void drawObj(objects, bool);
+void moveToOrigin(objects*);//TODO
+void calVerNormal(objects*, bool);

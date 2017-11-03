@@ -1,6 +1,16 @@
 //http://www.opengl-tutorial.org/beginners-tutorials/tutorial-7-model-loading/
 #include "object.h"
 
+glm::vec3 cross(glm::vec3 v1, glm::vec3 v2){
+  glm::vec3 n;
+  n.x = v1.y * v2.z - v1.z * v2.y;
+  n.y = v1.z * v2.x - v1.x * v2.z;
+  n.z = v1.x * v2.y - v1.y * v2.x;
+  float total = n.x*n.x + n.y*n.y + n.z*n.z;
+  n /= total;
+  return n;
+}
+
 objects getObjInfo(char* path){
 
   FILE* file = fopen(path, "r");
@@ -14,7 +24,12 @@ objects getObjInfo(char* path){
   char input[128];
   bool first = true;
   bool newMeshs = false;
+  glm::vec3 verNInit;
 
+  verNInit.x = verNInit.y = verNInit.z = 0;
+
+  bool QQ = true;
+  int ddd = 0;
   while(fscanf(file, "%s", input) != EOF){
     //vertex
     if(strcmp(input, "v") == 0){
@@ -22,25 +37,27 @@ objects getObjInfo(char* path){
       glm::vec3 vertex;
       fscanf(file, "%f %f %f", &vertex.x, &vertex.y, &vertex.z);
       obj.vertices.push_back(vertex);
+      obj.verNormal.push_back(verNInit);
 
-      char str[300];
+      char str[100];
       char *ptr = str;
       vColor vc;
 
-      fgets(str, 300, file);
-      while(*ptr == ' ') ptr++;
-      if(*ptr <= '9' && *ptr >= '0'){
-        int len = strlen(str);
-        fseek(file, -len, SEEK_CUR);
-        fscanf(file, "%f %f %f\n", &vc.r, &vc.g, &vc.b);
-        obj.vecColor.push_back(vc);
+      fscanf(file, "%s", str);
+      int len = strlen(str);
+      float value = atof(str);
+
+      if(value != 0 || str[0] == '0' || (str[0] == '-' && str[1] == '0')){
+        vc.r = value;
+        fscanf(file, "%f %f", &vc.g, &vc.b);
       }
       else{
+        fseek(file, -len, SEEK_CUR);
         vc.r = -1;
         vc.g = -1;
         vc.b = -1;
       }
-      obj.vecColor.push_back(vc);
+      obj.verColor.push_back(vc);
 
     }
     //uv
@@ -57,73 +74,33 @@ objects getObjInfo(char* path){
     }
     //mesh
     else if(strcmp(input, "f") == 0){
-
       int value;
-      char str[300], in[300];
-      int len, length, element;
+      int i, j;
+      char str[100], *tmp;
+      bool nData = false;
 
-      fgets(in, 300, file);
-      strcpy(str, in);
-      length = strlen(str) - 1;  //the return key(enter(13)) included in length
-      char *tmp = strtok(str, " /");
-
-      element = 0;
-      len = 1;  //the space after 'f'
-      while(tmp != NULL){
-        value = atoi(tmp);
-        len += strlen(tmp);
-
-        if(*(in + len) == ' ' || len == length){
-
-          if(element == 0){
-            meshs.vertexIndices.push_back(value);
-            meshs.uvIndices.push_back(-1);
-            meshs.normalIndices.push_back(-1);
-
-          }
-          else if(element == 1){
-            meshs.uvIndices.push_back(value);
-            meshs.normalIndices.push_back(-1);
-          }
-          else if(element == 2){
+      for(i = 0; i < 3; i++){
+        fscanf(file, "%s", str);
+        tmp = strtok(str, "/");
+        j = 0;
+        while(tmp != NULL){
+          value = atoi(tmp);
+          if(j == 0) meshs.vertexIndices.push_back(value);
+          else if(j == 1) meshs.uvIndices.push_back(value);
+          else if(j == 2){
             meshs.normalIndices.push_back(value);
+            nData = true;
           }
-          element = 0;
+          tmp = strtok(NULL, "/");
+          j++;
         }
-        else if(*(in + len) == '/'){
-
-          bool noNum = false;
-
-          if(element == 0){
-            meshs.vertexIndices.push_back(value);
-            if(*(in + len + 1) ==  '/'){
-              meshs.uvIndices.push_back(-1);
-              element++;
-              if(*(in + len + 2) ==  ' '){
-                meshs.normalIndices.push_back(-1);
-                element++;
-              }
-            }
-          }
-          else if(element == 1){
-            meshs.uvIndices.push_back(value);
-            if(*(in + len + 1) ==  ' ') meshs.normalIndices.push_back(-1);
-            element++;
-          }
-          else if(element == 2){
-            meshs.normalIndices.push_back(value);
-
-          }
-          element++;
+        if(j == 1){
+          meshs.uvIndices.push_back(-1);
+          if(!nData && i == 2) meshs.normalIndices.push_back(-1);
         }
-        tmp = strtok(NULL, " /");
-        len++;
+        else if(!nData && i == 2 && j == 2) meshs.normalIndices.push_back(-1);
       }
 
-      if(newMeshs){
-        objMeshs meshs;
-        newMeshs = false;
-      }
     }
     //different obj
     else if(strcmp(input, "g") == 0){
@@ -135,29 +112,97 @@ objects getObjInfo(char* path){
     }
   }
   obj.g.push_back(meshs);
-
+  //printf("%d, %d\n", obj.vecColor.size(), obj.vertices.size());
   return obj;
 }
-/*
-void setObjFun(objects *obj){
 
-  obj ->
+void calMeshNormal(objects* obj){
+
+  int allObj = obj->g.size();
+
+  for(int i = 0; i < allObj; i++){
+    int allMesh = obj->g[i].vertexIndices.size();
+    glm::vec3 p1, p2, p3, v1, v2;
+    for(int j = 0; j < allMesh; j += 3){
+      p1 = obj->vertices[ obj->g[i].vertexIndices[j]-1 ];
+      p2 = obj->vertices[ obj->g[i].vertexIndices[j+1]-1 ];
+      p3 = obj->vertices[ obj->g[i].vertexIndices[j+2]-1 ];
+      v1 = p2 - p1;
+      v2 = p3 - p1;
+
+      obj->normals.push_back(cross(v1, v2));
+      int len = obj->normals.size();
+      obj->g[i].normalIndices.push_back(len);
+    }
+  }
 }
-*/
-void drawObj(objects obj){
+
+void calVerNormal(objects *obj, bool meshNormal){
+
+  if(!meshNormal){
+    calMeshNormal(obj);
+  }
+
+  int allObj = obj->g.size();
+  int allVertex = obj->vertices.size();
+  int freq[allVertex];
+
+
+  for(int i = 0; i < allObj; i++){
+    for(int ii = 0; ii < allVertex; ii++) freq[ii] = 0;
+    int allMesh = obj->g[i].vertexIndices.size();
+
+    vector<glm::vec3> meshN;
+    for(int j = 0; j < allMesh; j++){
+
+      freq[ obj->g[i].vertexIndices[j]-1 ]++;
+      obj->verNormal[ obj->g[i].vertexIndices[j]-1 ] += obj->normals[j/3];
+    }
+    for(int k = 0; k < allVertex; k++){
+      if(freq[k] != 0) obj->verNormal[k] /= freq[k];
+    }
+
+  }
+
+}
+
+void moveToOrigin(objects *obj){
+
+}
+
+void drawObj(objects obj, bool color){
 
   int allObj = obj.g.size();
+  vColor *color1, *color2, *color3;
 
   for(int i = 0; i < allObj; i++){
     int allMesh = obj.g[i].vertexIndices.size();
     for(int j = 0; j < allMesh; j += 3){
-      /*
-         glBegin(GL_TRIANGLES);
-         glVertex3fv(&(obj.vertices[ obj.g[i].vertexIndices[j]-1 ].x));
-         glVertex3fv(&(obj.vertices[ obj.g[i].vertexIndices[j + 1]-1 ].x));
-         glVertex3fv(&(obj.vertices[ obj.g[i].vertexIndices[j + 2]-1 ].x));
-         glEnd();
-       */
+      color1 = &obj.verColor[obj.g[i].vertexIndices[j]-1];
+      color2 = &obj.verColor[obj.g[i].vertexIndices[j + 1]-1];
+      color3 = &obj.verColor[obj.g[i].vertexIndices[j + 2]-1];
+
+      glBegin(GL_TRIANGLES);
+        if(color){
+          glNormal3fv(&(obj.verNormal[ obj.g[i].vertexIndices[j]-1 ].x));
+          glColor3f(color1->r, color1->g, color1->b);
+        }
+        glVertex3fv(&(obj.vertices[ obj.g[i].vertexIndices[j]-1 ].x));
+
+        if(color){
+          glNormal3fv(&(obj.verNormal[ obj.g[i].vertexIndices[j + 1]-1 ].x));
+          glColor3f(color2->r, color2->g, color2->b);
+        }
+        glVertex3fv(&(obj.vertices[ obj.g[i].vertexIndices[j + 1]-1 ].x));
+
+        if(color){
+          glNormal3fv(&(obj.verNormal[ obj.g[i].vertexIndices[j + 2]-1 ].x));
+          glColor3f(color3->r, color3->g, color3->b);
+        }
+        glVertex3fv(&(obj.vertices[ obj.g[i].vertexIndices[j + 2]-1 ].x));
+      glEnd();
+
+/*
       glBegin(GL_LINES);
 
       glVertex3fv(&(obj.vertices[ obj.g[i].vertexIndices[j]-1 ].x));
@@ -170,6 +215,9 @@ void drawObj(objects obj){
       glVertex3fv(&(obj.vertices[ obj.g[i].vertexIndices[j + 2]-1 ].x));
 
       glEnd();
+*/
     }
   }
 }
+
+
