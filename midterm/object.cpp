@@ -28,8 +28,6 @@ objects getObjInfo(char* path){
 
   verNInit.x = verNInit.y = verNInit.z = 0;
 
-  bool QQ = true;
-  int ddd = 0;
   while(fscanf(file, "%s", input) != EOF){
     //vertex
     if(strcmp(input, "v") == 0){
