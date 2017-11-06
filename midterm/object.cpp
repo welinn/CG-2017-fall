@@ -111,6 +111,7 @@ objects getObjInfo(char* path){
   }
   obj.g.push_back(meshs);
   //printf("%d, %d\n", obj.vecColor.size(), obj.vertices.size());
+  moveToOrigin(&obj);
   return obj;
 }
 
@@ -166,6 +167,17 @@ void calVerNormal(objects *obj, bool meshNormal){
 
 void moveToOrigin(objects *obj){
 
+  glm::vec3 move;
+  int len = obj->vertices.size();
+
+  move.x = move.y = move.z = 0;
+  obj->position = obj->axis.x = obj->axis.y = obj->axis.z = move;
+
+  for(int i = 0; i < len; i++) move += obj->vertices[i];
+
+  move /= len;
+  for(int i = 0; i < len; i++) obj->vertices[i] -= move;
+
 }
 
 void drawObj(objects obj, bool color){
@@ -218,4 +230,38 @@ void drawObj(objects obj, bool color){
   }
 }
 
+void rotateByVec(objects* obj, glm::vec3 goalVec, char axis, bool updateData){
 
+  glm::vec3 newX, newY, newZ, tmpZ;
+
+  if(axis == 'z'){
+    newZ = tmpZ = goalVec;
+    tmpZ.x = 0;
+    newY = cross(tmpZ, obj->axis.x);
+    newX = cross(newY, newZ);
+  }
+  else if(axis == 'y'){
+  }
+  else{
+  }
+
+  if(updateData){
+    float data[] = {
+      newX.x, newY.x, newZ.x, 0,
+      newX.y, newY.y, newZ.y, 0,
+      newX.z, newY.z, newZ.z, 0,
+           0,      0,      0, 1
+    };
+    Mat rotMat = Mat(4, 4, CV_32F, data).clone();
+    //TODO
+  }
+
+  obj->axis.x = newX;
+  obj->axis.y = newY;
+  obj->axis.z = newZ;
+
+
+}
+
+void rotation(objects* obj, float theta){
+}

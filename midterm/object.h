@@ -6,10 +6,12 @@
 #include <GL/glew.h>
 #include <GL/glut.h>
 #include <GL/freeglut.h>
-
 #include "glm/ext.hpp"
 
+#include <opencv2/opencv.hpp>
+
 using namespace std;
+using namespace cv;
 
 typedef struct{
   float r;
@@ -27,8 +29,6 @@ typedef struct {
   vector<int> vertexIndices;
   vector<int> uvIndices;
   vector<int> normalIndices;
-  localCoordinate axis;
-  glm::vec3 origin;
 }objMeshs;
 
 typedef struct {
@@ -40,9 +40,14 @@ typedef struct {
   vector<glm::vec3> normals;
   vector<objMeshs> g;
 
+  localCoordinate axis;
+  glm::vec3 position;
+
 }objects;
 
 objects getObjInfo(char*);
 void drawObj(objects, bool);
-void moveToOrigin(objects*);//TODO
+void moveToOrigin(objects*);
 void calVerNormal(objects*, bool);
+void rotateByVec(objects*, glm::vec3, char, bool);//TODO
+void rotation(objects*, float); //TODO

@@ -8,6 +8,7 @@ void resizeFunction(int, int);
 //float dot(glm::vec3, glm::vec3);
 
 int currentWidth, currentHeight;
+float rate = 2.5;
 objects doll, route;
 //char *roadPt;
 
@@ -21,8 +22,8 @@ int main(int argc, char* argv[]){
   char dollPath[] = "./data/doll.obj";
   char routePath[] = "./data/route_model.obj";
 
-  currentWidth = 600;
-  currentHeight = 400;
+  currentWidth = 800;
+  currentHeight = 600;
   glutInit(&argc, argv);
   glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
   glutInitWindowSize(currentWidth, currentHeight);
@@ -67,9 +68,9 @@ int main(int argc, char* argv[]){
      myLists[0] = myIndex;
 */
 
-  //doll = getObjInfo(dollPath);
-  doll = getObjInfo(argv[1]);
-  //route = getObjInfo(routePath);
+  doll = getObjInfo(dollPath);
+  //doll = getObjInfo(argv[1]);
+  route = getObjInfo(routePath);
 
   calVerNormal(&doll, false);
 
@@ -98,16 +99,17 @@ void render(){
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-/*
-  glOrtho(-float(currentWidth)/2.0, float(currentWidth)/2.0,
-      -float(currentHeight)/2.0,float(currentHeight)/2.0,
+
+  glOrtho(-float(currentWidth)/rate, float(currentWidth)/rate,
+      -float(currentHeight)/rate, float(currentHeight)/rate,
       -currentHeight * 10.0, currentHeight * 10.0);
-*/
-  glOrtho(-50, 50, -50, 50, -currentHeight * 10.0, currentHeight * 10.0);
+
+//  glOrtho(-50, 50, -50, 50, -currentHeight * 10.0, currentHeight * 10.0);
 /*
   theta += 0.05;
   gluLookAt(1000 * cos(theta) , 0, 1000 * sin(theta), 0, 0, 0, 0, 1, 0);
 */
+  //gluLookAt(0 , 0, 1000, 0, 0, 0, 0, 1, 0);
   animate();
 
   glFlush();
@@ -126,10 +128,17 @@ void animate(){
   };
 */
   glMatrixMode(GL_MODELVIEW);
+
   glPushMatrix();
     //glMultMatrixf(A);
     glRotatef(-90, 1, 0, 0);
     drawObj(doll, true);
+  glPopMatrix();
+
+  glPushMatrix();
+    //glMultMatrixf(A);
+    glRotatef(-90, 1, 0, 0);
+    drawObj(route, false);
   glPopMatrix();
 
 }
