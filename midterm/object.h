@@ -43,11 +43,15 @@ typedef struct {
   localCoordinate axis;
   glm::vec3 position;
 
+  glm::vec3 oriCenter;
+  glm::vec3 size;
+
 }objects;
 
 objects getObjInfo(char*);
 void drawObj(objects, bool);
 void moveToOrigin(objects*);
 void calVerNormal(objects*, bool);
-void rotateByVec(objects*, glm::vec3, char, bool);//TODO
+void rotateByVec(objects*, glm::vec3, char, glm::vec3 = glm::vec3(0, 0, 0), bool = false);//TODO
 void rotation(objects*, float); //TODO
+//void translation(objects*, glm::vec3);

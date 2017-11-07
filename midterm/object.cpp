@@ -6,8 +6,9 @@ glm::vec3 cross(glm::vec3 v1, glm::vec3 v2){
   n.x = v1.y * v2.z - v1.z * v2.y;
   n.y = v1.z * v2.x - v1.x * v2.z;
   n.z = v1.x * v2.y - v1.y * v2.x;
-  float total = n.x*n.x + n.y*n.y + n.z*n.z;
+  float total = sqrt(n.x*n.x + n.y*n.y + n.z*n.z);
   n /= total;
+
   return n;
 }
 
@@ -131,7 +132,7 @@ void calMeshNormal(objects* obj){
 
       obj->normals.push_back(cross(v1, v2));
       int len = obj->normals.size();
-      obj->g[i].normalIndices.push_back(len);
+      obj->g[i].normalIndices[j/3] = len;
     }
   }
 }
@@ -169,22 +170,57 @@ void moveToOrigin(objects *obj){
 
   glm::vec3 move;
   int len = obj->vertices.size();
+  float xMax, xMin, yMax, yMin, zMax, zMin;
 
-  move.x = move.y = move.z = 0;
-  obj->position = obj->axis.x = obj->axis.y = obj->axis.z = move;
+  xMin = xMax = obj->vertices[0].x;
+  yMin = yMax = obj->vertices[0].y;
+  zMin = zMax = obj->vertices[0].z;
 
-  for(int i = 0; i < len; i++) move += obj->vertices[i];
+  obj->position = glm::vec3(0, 0, 0);
+  obj->axis.x = glm::vec3(1, 0, 0);
+  obj->axis.y = glm::vec3(0, 1, 0);
+  obj->axis.z = glm::vec3(0, 0, 1);
 
-  move /= len;
+  for(int i = 0; i < len; i++){
+    if(xMin > obj->vertices[i].x) xMin = obj->vertices[i].x;
+    if(yMin > obj->vertices[i].y) yMin = obj->vertices[i].y;
+    if(zMin > obj->vertices[i].z) zMin = obj->vertices[i].z;
+    if(xMax < obj->vertices[i].x) xMax = obj->vertices[i].x;
+    if(yMax < obj->vertices[i].y) yMax = obj->vertices[i].y;
+    if(zMax < obj->vertices[i].z) zMax = obj->vertices[i].z;
+
+  }
+
+  obj->size.x = xMax - xMin;
+  obj->size.y = yMax - yMin;
+  obj->size.z = zMax - zMin;
+
+  obj->oriCenter.x = xMax + xMin;
+  obj->oriCenter.y = yMax + yMin;
+  obj->oriCenter.z = zMax + zMin;
+  move.x = obj->oriCenter.x / 2;
+  move.y = obj->oriCenter.y / 2;
+  move.z = obj->oriCenter.z / 2;
+
   for(int i = 0; i < len; i++) obj->vertices[i] -= move;
-
 }
 
 void drawObj(objects obj, bool color){
 
   int allObj = obj.g.size();
   vColor *color1, *color2, *color3;
+  Mat oriP1(4, 1, CV_32F);
+  Mat oriP2(4, 1, CV_32F);
+  Mat oriP3(4, 1, CV_32F);
+  float data[] = {
+    obj.axis.x.x, obj.axis.y.x, obj.axis.z.x, obj.position.x,
+    obj.axis.x.y, obj.axis.y.y, obj.axis.z.y, obj.position.y,
+    obj.axis.x.z, obj.axis.y.z, obj.axis.z.z, obj.position.z,
+               0,            0,            0,              1};
+  Mat rotMat = Mat(4, 4, CV_32F, data).clone();
+  float p1[3], p2[3], p3[3];
 
+  oriP1.at<float>(3, 0) = oriP2.at<float>(3, 0) = oriP3.at<float>(3, 0) = 1;
   for(int i = 0; i < allObj; i++){
     int allMesh = obj.g[i].vertexIndices.size();
     for(int j = 0; j < allMesh; j += 3){
@@ -192,24 +228,40 @@ void drawObj(objects obj, bool color){
       color2 = &obj.verColor[obj.g[i].vertexIndices[j + 1]-1];
       color3 = &obj.verColor[obj.g[i].vertexIndices[j + 2]-1];
 
+
+      for(int ii = 0; ii < 3; ii++){
+        oriP1.at<float>(ii, 0) = *(&obj.vertices[ obj.g[i].vertexIndices[j]-1 ].x + ii);
+        oriP2.at<float>(ii, 0) = *(&obj.vertices[ obj.g[i].vertexIndices[j+1]-1 ].x + ii);
+        oriP3.at<float>(ii, 0) = *(&obj.vertices[ obj.g[i].vertexIndices[j+2]-1 ].x + ii);
+      }
+
+      Mat newP1 = rotMat * oriP1;
+      Mat newP2 = rotMat * oriP2;
+      Mat newP3 = rotMat * oriP3;
+      for(int ii = 0; ii < 3; ii++){
+        p1[ii] = newP1.at<float>(ii, 0);
+        p2[ii] = newP2.at<float>(ii, 0);
+        p3[ii] = newP3.at<float>(ii, 0);
+      }
+
       glBegin(GL_TRIANGLES);
         if(color){
           glNormal3fv(&(obj.verNormal[ obj.g[i].vertexIndices[j]-1 ].x));
           glColor3f(color1->r, color1->g, color1->b);
         }
-        glVertex3fv(&(obj.vertices[ obj.g[i].vertexIndices[j]-1 ].x));
+        glVertex3fv(p1);
 
         if(color){
           glNormal3fv(&(obj.verNormal[ obj.g[i].vertexIndices[j + 1]-1 ].x));
           glColor3f(color2->r, color2->g, color2->b);
         }
-        glVertex3fv(&(obj.vertices[ obj.g[i].vertexIndices[j + 1]-1 ].x));
+        glVertex3fv(p2);
 
         if(color){
           glNormal3fv(&(obj.verNormal[ obj.g[i].vertexIndices[j + 2]-1 ].x));
           glColor3f(color3->r, color3->g, color3->b);
         }
-        glVertex3fv(&(obj.vertices[ obj.g[i].vertexIndices[j + 2]-1 ].x));
+        glVertex3fv(p3);
       glEnd();
 
 /*
@@ -230,16 +282,21 @@ void drawObj(objects obj, bool color){
   }
 }
 
-void rotateByVec(objects* obj, glm::vec3 goalVec, char axis, bool updateData){
+void rotateByVec(objects* obj, glm::vec3 goalVec, char axis, glm::vec3 trans, bool updateData){
 
   glm::vec3 newX, newY, newZ, tmpZ;
 
   if(axis == 'z'){
     newZ = tmpZ = goalVec;
     tmpZ.x = 0;
+
+//printf("orix: %f, %f, %f\n", obj->axis.x.x, obj->axis.x.y, obj->axis.x.z);
+
     newY = cross(tmpZ, obj->axis.x);
     newX = cross(newY, newZ);
   }
+
+  //TODO
   else if(axis == 'y'){
   }
   else{
@@ -247,19 +304,50 @@ void rotateByVec(objects* obj, glm::vec3 goalVec, char axis, bool updateData){
 
   if(updateData){
     float data[] = {
-      newX.x, newY.x, newZ.x, 0,
-      newX.y, newY.y, newZ.y, 0,
-      newX.z, newY.z, newZ.z, 0,
-           0,      0,      0, 1
-    };
+      newX.x, newY.x, newZ.x, trans.x,
+      newX.y, newY.y, newZ.y, trans.y,
+      newX.z, newY.z, newZ.z, trans.z,
+           0,      0,      0,       1};
     Mat rotMat = Mat(4, 4, CV_32F, data).clone();
-    //TODO
+    float point[] = {0, 0, 0, 1.0};
+    Mat oriPoint = Mat(4, 1, CV_32F, point).clone();
+    Mat oriVec = oriPoint.clone();
+    Mat newPoint, newVec;
+    glm::vec3 newV;
+    int len = obj->vertices.size();
+    int normalLen = obj->normals.size();
+
+    for(int i = 0; i < len; i++){
+
+      oriPoint.at<float>(0, 0) = obj->vertices[i].x;
+      oriPoint.at<float>(1, 0) = obj->vertices[i].y;
+      oriPoint.at<float>(2, 0) = obj->vertices[i].z;
+
+      newPoint = rotMat * oriPoint;
+
+      obj->vertices[i].x = newPoint.at<float>(0, 0);
+      obj->vertices[i].y = newPoint.at<float>(1, 0);
+      obj->vertices[i].z = newPoint.at<float>(2, 0);
+
+    }
+    for(int i = 0; i < normalLen; i++){
+      oriVec.at<float>(0, 0) = obj->normals[i].x;
+      oriVec.at<float>(1, 0) = obj->normals[i].y;
+      oriVec.at<float>(2, 0) = obj->normals[i].z;
+      newVec = rotMat * oriVec;
+      obj->normals[i].x = newVec.at<float>(0, 0);
+      obj->normals[i].y = newVec.at<float>(1, 0);
+      obj->normals[i].z = newVec.at<float>(2, 0);
+    }
   }
+  else{
 
-  obj->axis.x = newX;
-  obj->axis.y = newY;
-  obj->axis.z = newZ;
+    obj->axis.x = newX;
+    obj->axis.y = newY;
+    obj->axis.z = newZ;
+    obj->position += trans;
 
+  }
 
 }
 

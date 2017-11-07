@@ -4,16 +4,17 @@
 void animate();
 void render();
 void resizeFunction(int, int);
+void rotRouteData();
 
-//float dot(glm::vec3, glm::vec3);
 
 int currentWidth, currentHeight;
 float rate = 2.5;
 objects doll, route;
-//char *roadPt;
+vector<glm::vec3> routeData;
 
-
-float theta = 0;
+float test = 0;
+int step = 0;
+int totalLen;
 //GLuint myIndex =0;
 //GLubyte myLists[10];
 
@@ -21,6 +22,7 @@ int main(int argc, char* argv[]){
 
   char dollPath[] = "./data/doll.obj";
   char routePath[] = "./data/route_model.obj";
+  char routeDataPath[] = "./data/route.TXT";
 
   currentWidth = 800;
   currentHeight = 600;
@@ -69,10 +71,27 @@ int main(int argc, char* argv[]){
 */
 
   doll = getObjInfo(dollPath);
-  //doll = getObjInfo(argv[1]);
   route = getObjInfo(routePath);
 
   calVerNormal(&doll, false);
+
+  float t = doll.size.z / 2;
+  rotateByVec(&doll, glm::vec3(0, 1, 0), 'z', glm::vec3(0, t, 0), true);
+  rotateByVec(&route, glm::vec3(0, 1, 0), 'z', glm::vec3(0, 0, 0), true);
+
+  FILE* routeDataPtr = fopen(routeDataPath, "r");
+  if(routeDataPtr == NULL){
+    printf("Open %s fail\n", routeDataPath);
+    exit(EXIT_FAILURE);
+  }
+  glm::vec3 p;
+  while(fscanf(routeDataPtr, "%f %f %f\n", &p.x, &p.y, &p.z) != EOF){
+    routeData.push_back(p);
+  }
+  rotRouteData();
+  totalLen = routeData.size();
+
+  doll.position = routeData[0];
 
   glutReshapeFunc(resizeFunction);
   glutDisplayFunc(render);
@@ -109,7 +128,7 @@ void render(){
   theta += 0.05;
   gluLookAt(1000 * cos(theta) , 0, 1000 * sin(theta), 0, 0, 0, 0, 1, 0);
 */
-  //gluLookAt(0 , 0, 1000, 0, 0, 0, 0, 1, 0);
+  gluLookAt(0 , 0, 1000, 0, 0, 0, 0, 1, 0);
   animate();
 
   glFlush();
@@ -127,18 +146,55 @@ void animate(){
     0, 0,  0, 1
   };
 */
-  glMatrixMode(GL_MODELVIEW);
+//printf("%d / %d\n", step, totalLen);
+  glm::vec3 vec = routeData[1] - routeData[0];
+  //glm::vec3 vec = routeData[(step + 1) % totalLen] - routeData[step];
+  glm::vec3 trans = routeData[(step + 1) % totalLen] - doll.position;
 
+//printf("%f, %f, %f\n", doll.axis.z.x, doll.axis.z.y, doll.axis.z.z);
+  rotateByVec(&doll, vec, 'z', trans);
+
+  glMatrixMode(GL_MODELVIEW);
+//test += 10;
   glPushMatrix();
     //glMultMatrixf(A);
-    glRotatef(-90, 1, 0, 0);
+    //glRotatef(test, 1, 0, 0);
     drawObj(doll, true);
   glPopMatrix();
 
   glPushMatrix();
-    //glMultMatrixf(A);
-    glRotatef(-90, 1, 0, 0);
     drawObj(route, false);
   glPopMatrix();
 
+  step = ++step % totalLen;
+}
+
+void rotRouteData(){
+  float d[] = {
+    1,  0, 0, 0,
+    0,  0, 1, 0,
+    0, -1, 0, 0,
+    0,  0, 0, 1};
+  Mat rotMat = Mat(4, 4, CV_32F, d).clone();
+  float p[] = {0, 0, 0, 1};
+  Mat pt = Mat(4, 1, CV_32F, p).clone();
+
+  int len = routeData.size();
+  glm::vec3 move;
+  move.x = route.oriCenter.x / 2;
+  move.y = route.oriCenter.y / 2;
+  move.z = route.oriCenter.z / 2;
+
+  for(int i = 0; i < len; i++){
+    routeData[i] -= move;
+
+    pt.at<float>(0, 0) = routeData[i].x;
+    pt.at<float>(1, 0) = routeData[i].y;
+    pt.at<float>(2, 0) = routeData[i].z;
+    Mat newPt = rotMat * pt;
+    routeData[i].x = newPt.at<float>(0, 0);
+    routeData[i].y = newPt.at<float>(1, 0);
+    routeData[i].z = newPt.at<float>(2, 0);
+
+  }
 }
