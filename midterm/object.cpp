@@ -14,9 +14,10 @@ glm::vec3 cross(glm::vec3 v1, glm::vec3 v2){
 
 float dot(glm::vec3 v1, glm::vec3 v2, bool normalize){
   float d = v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
-  if(normalize){
+  if(normalize){ //return cos theta
     float len = sqrt(v1.x*v1.x + v1.y*v1.y + v1.z*v1.z) * sqrt(v2.x*v2.x + v2.y*v2.y + v2.z*v2.z);
     d /= len;
+    d = d < -1.0 ? -1.0 : d > 1.0 ? 1.0 : d;
   }
   return d;
 }
@@ -310,12 +311,7 @@ void rotateByVec(objects* obj, glm::vec3 goalVec, char axis, glm::vec3 trans, bo
       rotAxis = obj->axis.y;
       rotAngle = 0;
     }
-    else{
-      dotVal = dot(obj->axis.z, goalVec, true);
-      if(dotVal > 1.0) dotVal = 1.0;
-      else if(dotVal < -1.0) dotVal = -1.0;
-      rotAngle = acos(dotVal);
-    }
+    else rotAngle = acos(dot(obj->axis.z, goalVec, true));
   }
 
   //goalVec is new y axis
@@ -326,12 +322,7 @@ void rotateByVec(objects* obj, glm::vec3 goalVec, char axis, glm::vec3 trans, bo
       rotAxis = obj->axis.z;
       rotAngle = 0;
     }
-    else{
-      dotVal = dot(obj->axis.y, goalVec, true);
-      if(dotVal > 1.0) dotVal = 1.0;
-      else if(dotVal < -1.0) dotVal = -1.0;
-      rotAngle = acos(dotVal);
-    }
+    else rotAngle = acos(dot(obj->axis.y, goalVec, true));
   }
 
   //goalVec is new x axis
@@ -342,12 +333,7 @@ void rotateByVec(objects* obj, glm::vec3 goalVec, char axis, glm::vec3 trans, bo
       rotAxis = obj->axis.y;
       rotAngle = 0;
     }
-    else{
-      dotVal = dot(obj->axis.x, goalVec, true);
-      if(dotVal > 1.0) dotVal = 1.0;
-      else if(dotVal < -1.0) dotVal = -1.0;
-      rotAngle = acos(dotVal);
-    }
+    else rotAngle = acos(dot(obj->axis.x, goalVec, true));
   }
 
   float COS = cos(rotAngle);

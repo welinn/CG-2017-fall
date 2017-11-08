@@ -148,10 +148,9 @@ void animate(){
     glm::vec3 g = glm::vec3(0, -1, 0);
     glm::vec3 hori = cross(g, doll.axis.z);
     glm::vec3 top = cross(hori, doll.axis.z);
-
     float dot1, dot2;
-    dot1 = dot(top, doll.axis.y);
-    dot2 = dot(-top, doll.axis.y);
+    dot1 = acos(dot(top, doll.axis.y, true));
+    dot2 = acos(dot(-top, doll.axis.y, true));
     if(dot1 < 0) dot1 += 2 * M_PI;
     if(dot2 < 0) dot2 += 2 * M_PI;
     if(dot1 < dot2) doll.axis.y = top;
