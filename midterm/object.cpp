@@ -12,6 +12,18 @@ glm::vec3 cross(glm::vec3 v1, glm::vec3 v2){
   return n;
 }
 
+float dot(glm::vec3 v1, glm::vec3 v2, bool normalize){
+  float d = v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
+  if(normalize){
+    float len = sqrt(v1.x*v1.x + v1.y*v1.y + v1.z*v1.z) * sqrt(v2.x*v2.x + v2.y*v2.y + v2.z*v2.z);
+    d /= len;
+  }
+  return d;
+}
+//      math
+// ======^^======
+// ======vv======
+//     object
 objects getObjInfo(char* path){
 
   FILE* file = fopen(path, "r");
@@ -111,7 +123,6 @@ objects getObjInfo(char* path){
     }
   }
   obj.g.push_back(meshs);
-  //printf("%d, %d\n", obj.vecColor.size(), obj.vertices.size());
   moveToOrigin(&obj);
   return obj;
 }
@@ -284,23 +295,91 @@ void drawObj(objects obj, bool color){
 
 void rotateByVec(objects* obj, glm::vec3 goalVec, char axis, glm::vec3 trans, bool updateData){
 
-  glm::vec3 newX, newY, newZ, tmpZ;
+  glm::vec3 newX, newY, newZ, rotAxis;
+  float rotAngle, dotVal;
 
+  //goalVec is new z axis
   if(axis == 'z'){
-    newZ = tmpZ = goalVec;
-    tmpZ.x = 0;
+    rotAxis = cross(obj->axis.z, goalVec);
 
-//printf("orix: %f, %f, %f\n", obj->axis.x.x, obj->axis.x.y, obj->axis.x.z);
-
-    newY = cross(tmpZ, obj->axis.x);
-    newX = cross(newY, newZ);
+    if(abs(rotAxis.x) < 1e-3 && abs(rotAxis.y) < 1e-3 && abs(rotAxis.z) < 1e-3){
+      printf("no rotation\n");
+      rotAxis = obj->axis.y;
+      rotAngle = 0;
+    }
+    else{
+      dotVal = dot(obj->axis.z, goalVec, true);
+      if(dotVal > 1.0) dotVal = 1.0;
+      else if(dotVal < -1.0) dotVal = -1.0;
+      rotAngle = acos(dotVal);
+    }
   }
 
-  //TODO
+  //goalVec is new y axis
   else if(axis == 'y'){
+    rotAxis = cross(obj->axis.y, goalVec);
+    if(abs(rotAxis.x) < 1e-3 && abs(rotAxis.y) < 1e-3 && abs(rotAxis.z) < 1e-3){
+      printf("no rotation\n");
+      rotAxis = obj->axis.z;
+      rotAngle = 0;
+    }
+    else{
+      dotVal = dot(obj->axis.y, goalVec, true);
+      if(dotVal > 1.0) dotVal = 1.0;
+      else if(dotVal < -1.0) dotVal = -1.0;
+      rotAngle = acos(dotVal);
+    }
   }
+
+  //goalVec is new x axis
   else{
+    rotAxis = cross(obj->axis.x, goalVec);
+    if(abs(rotAxis.x) < 1e-3 && abs(rotAxis.y) < 1e-3 && abs(rotAxis.z) < 1e-3){
+      printf("no rotation\n");
+      rotAxis = obj->axis.y;
+      rotAngle = 0;
+    }
+    else{
+      dotVal = dot(obj->axis.x, goalVec, true);
+      if(dotVal > 1.0) dotVal = 1.0;
+      else if(dotVal < -1.0) dotVal = -1.0;
+      rotAngle = acos(dotVal);
+    }
   }
+
+  float COS = cos(rotAngle);
+  float SIN = sin(rotAngle);
+  float a = rotAxis.x, b = rotAxis.y, c = rotAxis.z;
+  float axisData[] = {
+       (1 - a*a)*COS + a*a, -a*b*COS - c*SIN + a*b, -a*c*COS + b*SIN + a*c, 0,
+    -a*b*COS + c*SIN + a*b,    (1 - b*b)*COS + b*b, -b*c*COS - a*SIN + b*c, 0,
+    -a*c*COS - b*SIN + a*c, -b*c*COS + a*SIN + b*c,    (1 - c*c)*COS + c*c, 0,
+                         0,                      0,                      0, 1};
+  float dataX[] = {obj->axis.x.x, obj->axis.x.y, obj->axis.x.z, 1};
+  float dataY[] = {obj->axis.y.x, obj->axis.y.y, obj->axis.y.z, 1};
+  float dataZ[] = {obj->axis.z.x, obj->axis.z.y, obj->axis.z.z, 1};
+
+  Mat axisRotMat = Mat(4, 4, CV_32F, axisData).clone();
+  Mat axisX = Mat(4, 1, CV_32F, dataX).clone();
+  Mat axisY = Mat(4, 1, CV_32F, dataY).clone();
+  Mat axisZ = Mat(4, 1, CV_32F, dataZ).clone();
+
+  axisX = axisRotMat * axisX;
+  axisY = axisRotMat * axisY;
+  axisZ = axisRotMat * axisZ;
+  newX.x = axisX.at<float>(0, 0);
+  newX.y = axisX.at<float>(1, 0);
+  newX.z = axisX.at<float>(2, 0);
+  newY.x = axisY.at<float>(0, 0);
+  newY.y = axisY.at<float>(1, 0);
+  newY.z = axisY.at<float>(2, 0);
+  newZ.x = axisZ.at<float>(0, 0);
+  newZ.y = axisZ.at<float>(1, 0);
+  newZ.z = axisZ.at<float>(2, 0);
+
+  //avoid not orthogonal
+  newX = cross(newY, newZ);
+  newY = cross(newZ, newX);
 
   if(updateData){
     float data[] = {
@@ -341,14 +420,11 @@ void rotateByVec(objects* obj, glm::vec3 goalVec, char axis, glm::vec3 trans, bo
     }
   }
   else{
-
     obj->axis.x = newX;
     obj->axis.y = newY;
     obj->axis.z = newZ;
     obj->position += trans;
-
   }
-
 }
 
 void rotation(objects* obj, float theta){

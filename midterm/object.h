@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #include <vector>
 
 #include <GL/glew.h>
@@ -12,6 +13,11 @@
 
 using namespace std;
 using namespace cv;
+
+glm::vec3 cross(glm::vec3, glm::vec3);
+float dot(glm::vec3, glm::vec3, bool = false);
+//=====^^=====
+//    math
 
 typedef struct{
   float r;
@@ -52,6 +58,6 @@ objects getObjInfo(char*);
 void drawObj(objects, bool);
 void moveToOrigin(objects*);
 void calVerNormal(objects*, bool);
-void rotateByVec(objects*, glm::vec3, char, glm::vec3 = glm::vec3(0, 0, 0), bool = false);//TODO
+void rotateByVec(objects*, glm::vec3, char, glm::vec3 = glm::vec3(0, 0, 0), bool = false);
 void rotation(objects*, float); //TODO
 //void translation(objects*, glm::vec3);

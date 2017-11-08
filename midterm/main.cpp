@@ -1,4 +1,3 @@
-#include <math.h>
 #include "object.h"
 
 void animate();
@@ -8,7 +7,7 @@ void rotRouteData();
 
 
 int currentWidth, currentHeight;
-float rate = 2.5;
+float rate = 3.5;
 objects doll, route;
 vector<glm::vec3> routeData;
 
@@ -24,8 +23,8 @@ int main(int argc, char* argv[]){
   char routePath[] = "./data/route_model.obj";
   char routeDataPath[] = "./data/route.TXT";
 
-  currentWidth = 800;
-  currentHeight = 600;
+  currentWidth = 1080;
+  currentHeight = 720;
   glutInit(&argc, argv);
   glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
   glutInitWindowSize(currentWidth, currentHeight);
@@ -77,6 +76,7 @@ int main(int argc, char* argv[]){
 
   float t = doll.size.z / 2;
   rotateByVec(&doll, glm::vec3(0, 1, 0), 'z', glm::vec3(0, t, 0), true);
+  rotateByVec(&doll, glm::vec3(1, 0, 1), 'z', glm::vec3(0, 0, 0), true);
   rotateByVec(&route, glm::vec3(0, 1, 0), 'z', glm::vec3(0, 0, 0), true);
 
   FILE* routeDataPtr = fopen(routeDataPath, "r");
@@ -105,13 +105,7 @@ void resizeFunction(int width, int height){
   currentHeight = height;
   glViewport(0, 0, width, height);
 }
-/*
-float dot(glm::vec3 v1, glm::vec3 v2){
 
-  float d = v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
-  return d;
-}
-*/
 void render(){
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glViewport(0, 0, currentWidth, currentHeight);
@@ -128,7 +122,7 @@ void render(){
   theta += 0.05;
   gluLookAt(1000 * cos(theta) , 0, 1000 * sin(theta), 0, 0, 0, 0, 1, 0);
 */
-  gluLookAt(0 , 0, 1000, 0, 0, 0, 0, 1, 0);
+  gluLookAt(0 , 50, 500, 0, 0, 0, 0, 1, 0);
   animate();
 
   glFlush();
@@ -146,16 +140,19 @@ void animate(){
     0, 0,  0, 1
   };
 */
-//printf("%d / %d\n", step, totalLen);
-  glm::vec3 vec = routeData[1] - routeData[0];
-  //glm::vec3 vec = routeData[(step + 1) % totalLen] - routeData[step];
+  glm::vec3 vec = routeData[(step + 1) % totalLen] - routeData[step];
   glm::vec3 trans = routeData[(step + 1) % totalLen] - doll.position;
-
-//printf("%f, %f, %f\n", doll.axis.z.x, doll.axis.z.y, doll.axis.z.z);
   rotateByVec(&doll, vec, 'z', trans);
+  if(step % 5 == 0){
+    glm::vec3 g = glm::vec3(0, -1, 0);
+    glm::vec3 hori = cross(g, doll.axis.z);
+    glm::vec3 top = cross(hori, doll.axis.z);
+    if(top.y * doll.axis.y.y < 0) top.y *= -1;
+    doll.axis.y = top;
+  }
 
   glMatrixMode(GL_MODELVIEW);
-//test += 10;
+
   glPushMatrix();
     //glMultMatrixf(A);
     //glRotatef(test, 1, 0, 0);
