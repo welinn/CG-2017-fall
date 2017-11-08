@@ -257,18 +257,21 @@ void drawObj(objects obj, bool color){
 
       glBegin(GL_TRIANGLES);
         if(color){
+          glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
           glNormal3fv(&(obj.verNormal[ obj.g[i].vertexIndices[j]-1 ].x));
           glColor3f(color1->r, color1->g, color1->b);
         }
         glVertex3fv(p1);
 
         if(color){
+          glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
           glNormal3fv(&(obj.verNormal[ obj.g[i].vertexIndices[j + 1]-1 ].x));
           glColor3f(color2->r, color2->g, color2->b);
         }
         glVertex3fv(p2);
 
         if(color){
+          glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
           glNormal3fv(&(obj.verNormal[ obj.g[i].vertexIndices[j + 2]-1 ].x));
           glColor3f(color3->r, color3->g, color3->b);
         }

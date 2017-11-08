@@ -7,7 +7,7 @@ void rotRouteData();
 
 
 int currentWidth, currentHeight;
-float rate = 3.5;
+float rate = 3.7;
 objects doll, route;
 vector<glm::vec3> routeData;
 
@@ -45,15 +45,16 @@ int main(int argc, char* argv[]){
 
 
   glEnable(GL_DEPTH_TEST);
-/*
+
+  glEnable(GL_COLOR_MATERIAL);
   glEnable(GL_LIGHTING);
   glEnable(GL_LIGHT0);
 
   {
-    GLfloat MaterialAmbient[] = {1.0, 1.0, 1.0, 1.0f};
-    GLfloat MaterialDiffuse[] = {1, 1, 1, 1.0f};
+    GLfloat MaterialAmbient[] = {0.4, 0.4, 0.4, 1.0f};
+    GLfloat MaterialDiffuse[] = {0.7, 0.7, 0.7, 1.0f};
     GLfloat MaterialSpecular[] =  {1.2, 1.2, 1.2, 1.0f};
-    GLfloat AmbientLightPosition[] = {0, 100, 0, 1.0f};
+    GLfloat AmbientLightPosition[] = {-50, 80, 0, 1.0f};
 
     glLightfv(GL_LIGHT0, GL_AMBIENT, MaterialAmbient);
     glLightfv(GL_LIGHT0, GL_DIFFUSE, MaterialDiffuse);
@@ -61,7 +62,7 @@ int main(int argc, char* argv[]){
     glLightfv(GL_LIGHT0, GL_POSITION, AmbientLightPosition);
   }
 
-
+/*
      myIndex =  glGenLists(1);
      glNewList(myIndex, GL_COMPILE); // compile the first one
      DrawCarModel();
@@ -122,7 +123,7 @@ void render(){
   theta += 0.05;
   gluLookAt(1000 * cos(theta) , 0, 1000 * sin(theta), 0, 0, 0, 0, 1, 0);
 */
-  gluLookAt(0 , 50, 500, 0, 0, 0, 0, 1, 0);
+  gluLookAt(0 , 70, 500, 0, 0, 0, 0, 1, 0);
   animate();
 
   glFlush();
@@ -147,8 +148,14 @@ void animate(){
     glm::vec3 g = glm::vec3(0, -1, 0);
     glm::vec3 hori = cross(g, doll.axis.z);
     glm::vec3 top = cross(hori, doll.axis.z);
-    if(top.y * doll.axis.y.y < 0) top.y *= -1;
-    doll.axis.y = top;
+
+    float dot1, dot2;
+    dot1 = dot(top, doll.axis.y);
+    dot2 = dot(-top, doll.axis.y);
+    if(dot1 < 0) dot1 += 2 * M_PI;
+    if(dot2 < 0) dot2 += 2 * M_PI;
+    if(dot1 < dot2) doll.axis.y = top;
+    else doll.axis.y = -top;
   }
 
   glMatrixMode(GL_MODELVIEW);
