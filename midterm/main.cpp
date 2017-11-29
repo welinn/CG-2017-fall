@@ -29,8 +29,8 @@ int main(int argc, char* argv[]){
   glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
   glutInitWindowSize(currentWidth, currentHeight);
   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-  gluLookAt(0 , 0, 1000, 0, 0, 0, 0, 1, 0);
-
+//  gluLookAt(0 , 0, 1000, 0, 0, 0, 0, 1, 0);
+  glMatrixMode(GL_MODELVIEW);
   int windowHandle = glutCreateWindow("midterm");
   if(windowHandle < 1) {
     printf("ERROR: Could not create a new rendering window.\n");
@@ -113,17 +113,19 @@ void render(){
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-
+/*
   glOrtho(-float(currentWidth)/rate, float(currentWidth)/rate,
       -float(currentHeight)/rate, float(currentHeight)/rate,
       -currentHeight * 10.0, currentHeight * 10.0);
-
-//  glOrtho(-50, 50, -50, 50, -currentHeight * 10.0, currentHeight * 10.0);
+*/
+  gluPerspective(60, (double)currentWidth / currentHeight, 5, 4000);
 /*
   theta += 0.05;
   gluLookAt(1000 * cos(theta) , 0, 1000 * sin(theta), 0, 0, 0, 0, 1, 0);
 */
-  gluLookAt(0 , 70, 500, 0, 0, 0, 0, 1, 0);
+  gluLookAt(0 , 0, 500, 0, 0, 0, 0, 1, 0);
+  glMatrixMode(GL_MODELVIEW);
+
   animate();
 
   glFlush();
@@ -157,7 +159,6 @@ void animate(){
     else doll.axis.y = -top;
   }
 
-  glMatrixMode(GL_MODELVIEW);
 
   glPushMatrix();
     //glMultMatrixf(A);
