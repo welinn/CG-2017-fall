@@ -4,18 +4,21 @@ void animate();
 void render();
 void resizeFunction(int, int);
 void rotRouteData();
-
+void mouseFunc(int, int, int, int);
+void mouseMotionFunc(int, int);
 
 int currentWidth, currentHeight;
 float rate = 3.7;
 objects doll, route;
 vector<glm::vec3> routeData;
-
-float test = 0;
 int step = 0;
 int totalLen;
-//GLuint myIndex =0;
-//GLubyte myLists[10];
+
+int roomAngle = 60;
+int mouseX, mouseY;
+bool leftButtonDown = false;
+bool rightButtonDown = false;
+
 
 int main(int argc, char* argv[]){
 
@@ -29,7 +32,6 @@ int main(int argc, char* argv[]){
   glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
   glutInitWindowSize(currentWidth, currentHeight);
   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-//  gluLookAt(0 , 0, 1000, 0, 0, 0, 0, 1, 0);
   glMatrixMode(GL_MODELVIEW);
   int windowHandle = glutCreateWindow("midterm");
   if(windowHandle < 1) {
@@ -62,14 +64,6 @@ int main(int argc, char* argv[]){
     glLightfv(GL_LIGHT0, GL_POSITION, AmbientLightPosition);
   }
 
-/*
-     myIndex =  glGenLists(1);
-     glNewList(myIndex, GL_COMPILE); // compile the first one
-     DrawCarModel();
-     glEndList();
-     myLists[0] = myIndex;
-*/
-
   doll = getObjInfo(dollPath);
   route = getObjInfo(routePath);
 
@@ -96,6 +90,8 @@ int main(int argc, char* argv[]){
 
   glutReshapeFunc(resizeFunction);
   glutDisplayFunc(render);
+  glutMouseFunc(mouseFunc);
+  glutMotionFunc(mouseMotionFunc);
   glutMainLoop();
 
   return 0;
@@ -105,6 +101,37 @@ void resizeFunction(int width, int height){
   currentWidth = width;
   currentHeight = height;
   glViewport(0, 0, width, height);
+}
+
+void mouseFunc(int button, int state, int x, int y){
+//  printf("button: %d\n", button);
+//  printf("state: %d\n", state);
+  if(button == 3 && roomAngle > 5){
+    roomAngle -= 2;
+  }
+  else if(button == 4 && roomAngle < 175){
+    roomAngle += 2;
+  }
+  else if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN){
+    leftButtonDown = true;
+    printf("01\n");
+  }
+  else if(button == GLUT_LEFT_BUTTON && state == GLUT_UP){
+    printf("02\n");
+    leftButtonDown = false;
+  }
+  else if(button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN){
+    printf("03\n");
+    rightButtonDown = true;
+  }
+  else if(button == GLUT_RIGHT_BUTTON && state == GLUT_UP){
+    printf("04\n");
+    rightButtonDown = false;
+  }
+}
+
+void mouseMotionFunc(int x, int y){
+
 }
 
 void render(){
@@ -118,11 +145,7 @@ void render(){
       -float(currentHeight)/rate, float(currentHeight)/rate,
       -currentHeight * 10.0, currentHeight * 10.0);
 */
-  gluPerspective(60, (double)currentWidth / currentHeight, 5, 4000);
-/*
-  theta += 0.05;
-  gluLookAt(1000 * cos(theta) , 0, 1000 * sin(theta), 0, 0, 0, 0, 1, 0);
-*/
+  gluPerspective(roomAngle, (double)currentWidth / currentHeight, 5, 4000);
   gluLookAt(0 , 0, 500, 0, 0, 0, 0, 1, 0);
   glMatrixMode(GL_MODELVIEW);
 
