@@ -311,7 +311,7 @@ void rotateByVec(objects* obj, glm::vec3 goalVec, char axis, glm::vec3 trans, bo
       rotAxis = obj->axis.y;
       rotAngle = 0;
     }
-    else rotAngle = acos(dot(obj->axis.z, goalVec, true));
+    else rotAngle = acos(dot(obj->axis.z, goalVec));
   }
 
   //goalVec is new y axis
@@ -322,7 +322,7 @@ void rotateByVec(objects* obj, glm::vec3 goalVec, char axis, glm::vec3 trans, bo
       rotAxis = obj->axis.z;
       rotAngle = 0;
     }
-    else rotAngle = acos(dot(obj->axis.y, goalVec, true));
+    else rotAngle = acos(dot(obj->axis.y, goalVec));
   }
 
   //goalVec is new x axis
@@ -333,7 +333,7 @@ void rotateByVec(objects* obj, glm::vec3 goalVec, char axis, glm::vec3 trans, bo
       rotAxis = obj->axis.y;
       rotAngle = 0;
     }
-    else rotAngle = acos(dot(obj->axis.x, goalVec, true));
+    else rotAngle = acos(dot(obj->axis.x, goalVec));
   }
 
   float COS = cos(rotAngle);

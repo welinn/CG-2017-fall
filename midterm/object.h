@@ -15,7 +15,7 @@ using namespace std;
 using namespace cv;
 
 glm::vec3 cross(glm::vec3, glm::vec3);
-float dot(glm::vec3, glm::vec3, bool = false);
+float dot(glm::vec3, glm::vec3, bool = true);
 //=====^^=====
 //    math
 

@@ -6,6 +6,7 @@ void resizeFunction(int, int);
 void rotRouteData();
 void mouseFunc(int, int, int, int);
 void mouseMotionFunc(int, int);
+void timer(int);
 
 int currentWidth, currentHeight;
 float rate = 3.7;
@@ -14,11 +15,19 @@ vector<glm::vec3> routeData;
 int step = 0;
 int totalLen;
 
+glm::vec3 cameraPos(0, 0, 500);
 int roomAngle = 60;
+double cameraRotAngle;
 int mouseX, mouseY;
 bool leftButtonDown = false;
 bool rightButtonDown = false;
 
+void calAngle(){
+  glm::vec3 vector(0, 1, 0);
+//  if(cameraPos.z < 0) vector.z = -1;
+  cameraRotAngle = acos(dot(cameraPos, vector));
+  //if(cameraPos.z < 0) cameraRotAngle *= -1;
+}
 
 int main(int argc, char* argv[]){
 
@@ -28,6 +37,8 @@ int main(int argc, char* argv[]){
 
   currentWidth = 1080;
   currentHeight = 720;
+  calAngle();
+
   glutInit(&argc, argv);
   glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
   glutInitWindowSize(currentWidth, currentHeight);
@@ -92,6 +103,7 @@ int main(int argc, char* argv[]){
   glutDisplayFunc(render);
   glutMouseFunc(mouseFunc);
   glutMotionFunc(mouseMotionFunc);
+  glutTimerFunc(20, timer, 0);
   glutMainLoop();
 
   return 0;
@@ -114,10 +126,10 @@ void mouseFunc(int button, int state, int x, int y){
   }
   else if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN){
     leftButtonDown = true;
-    printf("01\n");
+    mouseX = x;
+    mouseY = y;
   }
   else if(button == GLUT_LEFT_BUTTON && state == GLUT_UP){
-    printf("02\n");
     leftButtonDown = false;
   }
   else if(button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN){
@@ -131,7 +143,52 @@ void mouseFunc(int button, int state, int x, int y){
 }
 
 void mouseMotionFunc(int x, int y){
+  if(leftButtonDown){
 
+    //axis y
+    double r = sqrt(cameraPos.x * cameraPos.x + cameraPos.z * cameraPos.z);
+    double arcLen = (mouseX - x) * 2 * M_PI * r / currentWidth;
+    double theta = arcLen / r;
+    float data[] = {
+       cos(theta), 0, sin(theta), 0,
+                0, 1,          0, 0,
+      -sin(theta), 0, cos(theta), 0,
+                0, 0,          0, 1};
+    Mat rotY(4, 4, CV_32F, data);
+    float pos[] = {cameraPos.x, cameraPos.y, cameraPos.z, 1};
+    Mat cPos(4, 1, CV_32F, pos);
+    cPos = rotY * cPos;
+    cameraPos.x = cPos.at<float>(0, 0);
+    cameraPos.y = cPos.at<float>(1, 0);
+    cameraPos.z = cPos.at<float>(2, 0);
+
+    //axis x
+    double r2 = sqrt(cameraPos.y * cameraPos.y + cameraPos.z * cameraPos.z);
+    double arcLen2 = (mouseY - y) * 2 * M_PI * r2 / currentHeight;
+    double theta2 = arcLen2 / r2;
+    if(cameraRotAngle + theta2 < 0) theta2 = cameraRotAngle;
+    else if(cameraRotAngle + theta2 > M_PI) theta2 = M_PI - cameraRotAngle;
+    float data2[] = {
+      1,          0,           0, 0,
+      0, cos(theta2), -sin(theta2), 0,
+      0, sin(theta2),  cos(theta2), 0,
+      0,          0,           0, 1};
+    Mat rotX(4, 4, CV_32F, data2);
+    float pos2[] = {cameraPos.x, cameraPos.y, cameraPos.z, 1};
+    Mat cPos2(4, 1, CV_32F, pos2);
+    cPos2 = rotX * cPos2;
+    cameraPos.x = cPos2.at<float>(0, 0);
+    cameraPos.y = cPos2.at<float>(1, 0);
+    cameraPos.z = cPos2.at<float>(2, 0);
+    calAngle();
+
+    mouseX = x;
+    mouseY = y;
+  }
+  else{
+    printf("x: %d, y:%d\n", x, y);
+  }
+  glutPostRedisplay();
 }
 
 void render(){
@@ -146,7 +203,7 @@ void render(){
       -currentHeight * 10.0, currentHeight * 10.0);
 */
   gluPerspective(roomAngle, (double)currentWidth / currentHeight, 5, 4000);
-  gluLookAt(0 , 0, 500, 0, 0, 0, 0, 1, 0);
+  gluLookAt(cameraPos.x, cameraPos.y, cameraPos.z, 0, 0, 0, 0, 1, 0);
   glMatrixMode(GL_MODELVIEW);
 
   animate();
@@ -224,4 +281,9 @@ void rotRouteData(){
     routeData[i].z = newPt.at<float>(2, 0);
 
   }
+}
+
+void timer(int t){
+  glutTimerFunc(50, timer, t + 1);
+  glutPostRedisplay();
 }
