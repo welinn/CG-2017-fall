@@ -15,16 +15,12 @@ vector<glm::vec3> routeData;
 int step = 0;
 int totalLen;
 
-
 typedef struct {
   glm::vec3 pos;
-//  glm::vec3 axisX;
   glm::vec3 up;
-//  glm::vec3 axisZ;
   glm::vec3 lookAt;
 }cameraInfo;
 
-//glm::vec3 camera.pos(0, 0, 500);
 cameraInfo camera;
 int roomAngle = 60;
 double cameraRotAngle = M_PI/2;
@@ -33,13 +29,9 @@ bool leftButtonDown = false;
 bool rightButtonDown = false;
 
 void cameraInit(){
-
   camera.pos = glm::vec3 (0, 0, 500);
-//  camera.axisX = glm::vec3 (1, 0, 0);
   camera.up = glm::vec3 (0, 1, 0);
-//  camera.axisZ = glm::vec3 (0, 0, 1);
   camera.lookAt = glm::vec3 (0, 0, 0);
-
 }
 
 int main(int argc, char* argv[]){
@@ -127,8 +119,6 @@ void resizeFunction(int width, int height){
 }
 
 void mouseFunc(int button, int state, int x, int y){
-//  printf("button: %d\n", button);
-//  printf("state: %d\n", state);
   if(button == 3 && roomAngle > 5){
     roomAngle -= 2;
   }
@@ -292,7 +282,6 @@ void rotRouteData(){
     routeData[i].x = newPt.at<float>(0, 0);
     routeData[i].y = newPt.at<float>(1, 0);
     routeData[i].z = newPt.at<float>(2, 0);
-
   }
 }
 
