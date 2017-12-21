@@ -21,6 +21,12 @@ float dot(glm::vec3 v1, glm::vec3 v2, bool normalize){
   }
   return d;
 }
+
+void setVec3(glm::vec3* vec, Mat data){
+  vec->x = data.at<float>(0, 0);
+  vec->y = data.at<float>(1, 0);
+  vec->z = data.at<float>(2, 0);
+}
 //      math
 // ======^^======
 // ======vv======
@@ -356,15 +362,9 @@ void rotateByVec(objects* obj, glm::vec3 goalVec, char axis, glm::vec3 trans, bo
   axisX = axisRotMat * axisX;
   axisY = axisRotMat * axisY;
   axisZ = axisRotMat * axisZ;
-  newX.x = axisX.at<float>(0, 0);
-  newX.y = axisX.at<float>(1, 0);
-  newX.z = axisX.at<float>(2, 0);
-  newY.x = axisY.at<float>(0, 0);
-  newY.y = axisY.at<float>(1, 0);
-  newY.z = axisY.at<float>(2, 0);
-  newZ.x = axisZ.at<float>(0, 0);
-  newZ.y = axisZ.at<float>(1, 0);
-  newZ.z = axisZ.at<float>(2, 0);
+  setVec3(&newX, axisX);
+  setVec3(&newY, axisY);
+  setVec3(&newZ, axisZ);
 
   //avoid not orthogonal
   newX = cross(newY, newZ);
@@ -392,20 +392,14 @@ void rotateByVec(objects* obj, glm::vec3 goalVec, char axis, glm::vec3 trans, bo
       oriPoint.at<float>(2, 0) = obj->vertices[i].z;
 
       newPoint = rotMat * oriPoint;
-
-      obj->vertices[i].x = newPoint.at<float>(0, 0);
-      obj->vertices[i].y = newPoint.at<float>(1, 0);
-      obj->vertices[i].z = newPoint.at<float>(2, 0);
-
+      setVec3(&(obj->vertices[i]), newPoint);
     }
     for(int i = 0; i < normalLen; i++){
       oriVec.at<float>(0, 0) = obj->normals[i].x;
       oriVec.at<float>(1, 0) = obj->normals[i].y;
       oriVec.at<float>(2, 0) = obj->normals[i].z;
       newVec = rotMat * oriVec;
-      obj->normals[i].x = newVec.at<float>(0, 0);
-      obj->normals[i].y = newVec.at<float>(1, 0);
-      obj->normals[i].z = newVec.at<float>(2, 0);
+      setVec3(&(obj->normals[i]), newVec);
     }
   }
   else{

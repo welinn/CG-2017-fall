@@ -15,18 +15,31 @@ vector<glm::vec3> routeData;
 int step = 0;
 int totalLen;
 
-glm::vec3 cameraPos(0, 0, 500);
+
+typedef struct {
+  glm::vec3 pos;
+//  glm::vec3 axisX;
+  glm::vec3 up;
+//  glm::vec3 axisZ;
+  glm::vec3 lookAt;
+}cameraInfo;
+
+//glm::vec3 camera.pos(0, 0, 500);
+cameraInfo camera;
 int roomAngle = 60;
-double cameraRotAngle;
+double cameraRotAngle = M_PI/2;
 int mouseX, mouseY;
 bool leftButtonDown = false;
 bool rightButtonDown = false;
 
-void calAngle(){
-  glm::vec3 vector(0, 1, 0);
-//  if(cameraPos.z < 0) vector.z = -1;
-  cameraRotAngle = acos(dot(cameraPos, vector));
-  //if(cameraPos.z < 0) cameraRotAngle *= -1;
+void cameraInit(){
+
+  camera.pos = glm::vec3 (0, 0, 500);
+//  camera.axisX = glm::vec3 (1, 0, 0);
+  camera.up = glm::vec3 (0, 1, 0);
+//  camera.axisZ = glm::vec3 (0, 0, 1);
+  camera.lookAt = glm::vec3 (0, 0, 0);
+
 }
 
 int main(int argc, char* argv[]){
@@ -34,10 +47,10 @@ int main(int argc, char* argv[]){
   char dollPath[] = "./data/doll.obj";
   char routePath[] = "./data/route_model.obj";
   char routeDataPath[] = "./data/route.TXT";
+  cameraInit();
 
   currentWidth = 1080;
   currentHeight = 720;
-  calAngle();
 
   glutInit(&argc, argv);
   glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
@@ -56,9 +69,7 @@ int main(int argc, char* argv[]){
     exit(EXIT_FAILURE);
   }
 
-
   glEnable(GL_DEPTH_TEST);
-
   glEnable(GL_COLOR_MATERIAL);
   glEnable(GL_LIGHTING);
   glEnable(GL_LIGHT0);
@@ -143,10 +154,10 @@ void mouseFunc(int button, int state, int x, int y){
 }
 
 void mouseMotionFunc(int x, int y){
-  if(leftButtonDown){
 
+  if(leftButtonDown){
     //axis y
-    double r = sqrt(cameraPos.x * cameraPos.x + cameraPos.z * cameraPos.z);
+    double r = sqrt(camera.pos.x*camera.pos.x + camera.pos.y*camera.pos.y + camera.pos.z*camera.pos.z);
     double arcLen = (mouseX - x) * 2 * M_PI * r / currentWidth;
     double theta = arcLen / r;
     float data[] = {
@@ -155,32 +166,32 @@ void mouseMotionFunc(int x, int y){
       -sin(theta), 0, cos(theta), 0,
                 0, 0,          0, 1};
     Mat rotY(4, 4, CV_32F, data);
-    float pos[] = {cameraPos.x, cameraPos.y, cameraPos.z, 1};
-    Mat cPos(4, 1, CV_32F, pos);
-    cPos = rotY * cPos;
-    cameraPos.x = cPos.at<float>(0, 0);
-    cameraPos.y = cPos.at<float>(1, 0);
-    cameraPos.z = cPos.at<float>(2, 0);
 
     //axis x
-    double r2 = sqrt(cameraPos.y * cameraPos.y + cameraPos.z * cameraPos.z);
-    double arcLen2 = (mouseY - y) * 2 * M_PI * r2 / currentHeight;
-    double theta2 = arcLen2 / r2;
-    if(cameraRotAngle + theta2 < 0) theta2 = cameraRotAngle;
+    double arcLen2 = 2 * M_PI * r * (y - mouseY) / currentHeight;
+    double theta2 = arcLen2 / r;
+    if(cameraRotAngle + theta2 < 0) theta2 = -cameraRotAngle;
     else if(cameraRotAngle + theta2 > M_PI) theta2 = M_PI - cameraRotAngle;
+    cameraRotAngle += theta2;
+
+    glm::vec3 cameraAxisX = cross(camera.up, camera.lookAt - camera.pos);
+    float a = cameraAxisX.x, b = cameraAxisX.y, c = cameraAxisX.z;
+    float COS = cos(theta2), SIN = sin(theta2);
     float data2[] = {
-      1,          0,           0, 0,
-      0, cos(theta2), -sin(theta2), 0,
-      0, sin(theta2),  cos(theta2), 0,
-      0,          0,           0, 1};
+         (1 - a*a)*COS + a*a, -a*b*COS - c*SIN + a*b, -a*c*COS + b*SIN + a*c, 0,
+      -a*b*COS + c*SIN + a*b,    (1 - b*b)*COS + b*b, -b*c*COS - a*SIN + b*c, 0,
+      -a*c*COS - b*SIN + a*c, -b*c*COS + a*SIN + b*c,    (1 - c*c)*COS + c*c, 0,
+                           0,                      0,                      0, 1};
     Mat rotX(4, 4, CV_32F, data2);
-    float pos2[] = {cameraPos.x, cameraPos.y, cameraPos.z, 1};
-    Mat cPos2(4, 1, CV_32F, pos2);
-    cPos2 = rotX * cPos2;
-    cameraPos.x = cPos2.at<float>(0, 0);
-    cameraPos.y = cPos2.at<float>(1, 0);
-    cameraPos.z = cPos2.at<float>(2, 0);
-    calAngle();
+    float pos[] = {camera.pos.x, camera.pos.y, camera.pos.z, 1};
+    Mat cPos(4, 1, CV_32F, pos);
+    float upV[] = {camera.up.x, camera.up.y, camera.up.z, 1};
+    Mat cUpV(4, 1, CV_32F, upV);
+
+    cPos = rotX * rotY * cPos;
+    cUpV = rotX * rotY * cUpV;
+    setVec3(&(camera.pos), cPos);
+    setVec3(&(camera.up), cUpV);
 
     mouseX = x;
     mouseY = y;
@@ -203,7 +214,9 @@ void render(){
       -currentHeight * 10.0, currentHeight * 10.0);
 */
   gluPerspective(roomAngle, (double)currentWidth / currentHeight, 5, 4000);
-  gluLookAt(cameraPos.x, cameraPos.y, cameraPos.z, 0, 0, 0, 0, 1, 0);
+  gluLookAt(camera.pos.x, camera.pos.y, camera.pos.z,
+            camera.lookAt.x, camera.lookAt.y, camera.lookAt.z,
+            camera.up.x, camera.up.y, camera.up.z);
   glMatrixMode(GL_MODELVIEW);
 
   animate();
