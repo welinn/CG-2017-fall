@@ -370,7 +370,7 @@ void textureInit(int size, vector<Mat> *tF, vector<Mat> *tR, char *path){
 void draw(vector<glm::vec3> vertex, vector< vector<int> > mesh, vector<glm::vec3> normal, GLuint *ID, float r){
 
   int len = mesh.size();
-  float x1, x2, x3, x4;
+  float x1, x2, x3, x4, y1, y2, y3, y4;
   for(int i = 0; i < len; i++){
 
     glEnable(GL_TEXTURE_2D);
@@ -378,29 +378,38 @@ void draw(vector<glm::vec3> vertex, vector< vector<int> > mesh, vector<glm::vec3
 
     if(vertex[ mesh[i][0] ].z < 0){
       glBindTexture(GL_TEXTURE_2D, ID[0]);
-      x1  = -((vertex[ mesh[i][0] ].x + r) * 0.4 / r + 0.075);
-      x2  = -((vertex[ mesh[i][1] ].x + r) * 0.4 / r + 0.075);
-      x3  = -((vertex[ mesh[i][2] ].x + r) * 0.4 / r + 0.075);
-      x4  = -((vertex[ mesh[i][3] ].x + r) * 0.4 / r + 0.075);
+      x1  = ((-vertex[ mesh[i][0] ].x + r) * 0.4 / r + 0.165);
+      x2  = ((-vertex[ mesh[i][1] ].x + r) * 0.4 / r + 0.165);
+      x3  = ((-vertex[ mesh[i][2] ].x + r) * 0.4 / r + 0.165);
+      x4  = ((-vertex[ mesh[i][3] ].x + r) * 0.4 / r + 0.165);
+      y1 = (vertex[ mesh[i][0] ].y + r) * 0.4 / r + 0.08;
+      y2 = (vertex[ mesh[i][1] ].y + r) * 0.4 / r + 0.08;
+      y3 = (vertex[ mesh[i][2] ].y + r) * 0.4 / r + 0.08;
+      y4 = (vertex[ mesh[i][3] ].y + r) * 0.4 / r + 0.08;
+
     }
 
     else{
       glBindTexture(GL_TEXTURE_2D, ID[1]);
-      x1 = (vertex[ mesh[i][0] ].x + r) * 0.4 / r + 0.125;
-      x2 = (vertex[ mesh[i][1] ].x + r) * 0.4 / r + 0.125;
-      x3 = (vertex[ mesh[i][2] ].x + r) * 0.4 / r + 0.125;
-      x4 = (vertex[ mesh[i][3] ].x + r) * 0.4 / r + 0.125;
+      x1 = (vertex[ mesh[i][0] ].x + r) * 0.38 / r + 0.163;
+      x2 = (vertex[ mesh[i][1] ].x + r) * 0.38 / r + 0.163;
+      x3 = (vertex[ mesh[i][2] ].x + r) * 0.38 / r + 0.163;
+      x4 = (vertex[ mesh[i][3] ].x + r) * 0.38 / r + 0.163;
+      y1 = (vertex[ mesh[i][0] ].y + r) * 0.4 / r + 0.07;
+      y2 = (vertex[ mesh[i][1] ].y + r) * 0.4 / r + 0.07;
+      y3 = (vertex[ mesh[i][2] ].y + r) * 0.4 / r + 0.07;
+      y4 = (vertex[ mesh[i][3] ].y + r) * 0.4 / r + 0.07;
     }
 
     glBegin(GL_QUADS);
       glNormal3fv(&(normal[i].x));
-      glTexCoord2f(x1, (vertex[ mesh[i][0] ].y + r) * 0.4 / r + 0.07);
+      glTexCoord2f(x1, y1);
       glVertex3fv(&(vertex[ mesh[i][0] ].x));
-      glTexCoord2f(x2, (vertex[ mesh[i][1] ].y + r) * 0.4 / r + 0.07);
+      glTexCoord2f(x2, y2);
       glVertex3fv(&(vertex[ mesh[i][1] ].x));
-      glTexCoord2f(x3, (vertex[ mesh[i][2] ].y + r) * 0.4 / r + 0.07);
+      glTexCoord2f(x3, y3);
       glVertex3fv(&(vertex[ mesh[i][2] ].x));
-      glTexCoord2f(x4, (vertex[ mesh[i][3] ].y + r) * 0.4 / r + 0.07);
+      glTexCoord2f(x4, y4);
       glVertex3fv(&(vertex[ mesh[i][3] ].x));
     glEnd();
 
