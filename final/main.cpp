@@ -14,17 +14,20 @@
 using namespace std;
 using namespace cv;
 
-void setVec3(glm::vec3*, Mat);
-glm::vec3 cross(glm::vec3, glm::vec3);
-void skyInit(vector<glm::vec3>*, vector< vector<int> >*, vector<glm::vec3>*, float);
-void textureInit(int, vector<Mat>*, vector<Mat>*, char*);
-void draw(vector<glm::vec3>, vector< vector<int> >, vector<glm::vec3>, GLuint*, float);
 void animate();
 void render();
 void resizeFunction(int, int);
 void mouseFunc(int, int, int, int);
 void mouseMotionFunc(int, int);
 void timer(int);
+/////////////////////////////////////////////////////
+void setVec3(glm::vec3*, Mat);
+glm::vec3 cross(glm::vec3, glm::vec3);
+void skyInit(vector<glm::vec3>*, vector< vector<int> >*, vector<glm::vec3>*, float);
+void textureInit(int, vector<Mat>*, vector<Mat>*, char*);
+void draw(vector<glm::vec3>, vector< vector<int> >, vector<glm::vec3>, GLuint*, float);
+float calDist(glm::vec3, glm::vec3);
+float calLen(glm::vec3);
 
 typedef struct {
   glm::vec3 pos;
@@ -130,16 +133,15 @@ void resizeFunction(int width, int height){
 
 void mouseFunc(int button, int state, int x, int y){
   if(button == 3){
-    glm::vec3 dist = camera.pos - glm::vec3(0, 0, 0);
-    if(sqrt(dist.x*dist.x + dist.y*dist.y + dist.z*dist.z) > 106){
+    if(calDist(camera.pos, glm::vec3(0, 0, 0)) > 106){
       glm::vec3 tran = camera.lookAt - camera.pos;
-      tran /= sqrt(tran.x*tran.x + tran.y*tran.y + tran.z*tran.z) / 100;
+      tran /= calLen(tran) / 100;
       camera.pos += tran;
     }
   }
   else if(button == 4){
     glm::vec3 tran = camera.lookAt - camera.pos;
-    tran /= sqrt(tran.x*tran.x + tran.y*tran.y + tran.z*tran.z) / 100;
+    tran /= calLen(tran) / 100;
     camera.pos -= tran;
   }
   else if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN){
@@ -156,8 +158,9 @@ void mouseMotionFunc(int x, int y){
 
   if(leftButtonDown){
     //axis y
-    double r = sqrt(camera.pos.x*camera.pos.x + camera.pos.y*camera.pos.y + camera.pos.z*camera.pos.z);
-    double arcLen = -(mouseX - x) * 2 * M_PI * r / currentWidth;
+    double r = calDist(camera.pos, camera.lookAt);
+    double arcLen = (mouseX - x) * 2 * M_PI * r / currentWidth;
+    if(calDist(camera.pos, glm::vec3(0, 0, 0)) < radius) arcLen *= -1;
     double theta = arcLen / r;
     float data[] = {
       cos(theta), 0, sin(theta), 0,
@@ -167,7 +170,8 @@ void mouseMotionFunc(int x, int y){
     Mat rotY(4, 4, CV_32F, data);
 
     //axis x
-    double arcLen2 = 2 * M_PI * r * -(y - mouseY) / currentHeight;
+    double arcLen2 = 2 * M_PI * r * (y - mouseY) / currentHeight;
+    if(calDist(camera.pos, glm::vec3(0, 0, 0)) < radius) arcLen2 *= -1;
     double theta2 = arcLen2 / r;
     if(cameraRotAngle + theta2 < 0) theta2 = -cameraRotAngle;
     else if(cameraRotAngle + theta2 > M_PI) theta2 = M_PI - cameraRotAngle;
@@ -210,7 +214,7 @@ void render(){
   gluPerspective(roomAngle, (double)currentWidth / currentHeight, 5, 25000);
 
   glm::vec3 lookAt = camera.lookAt - camera.pos;
-  lookAt /= sqrt(lookAt.x*lookAt.x + lookAt.y*lookAt.y + lookAt.z*lookAt.z) / radius;
+  lookAt /= calLen(lookAt) / radius;
   lookAt += camera.pos;
   gluLookAt(camera.pos.x, camera.pos.y, camera.pos.z,
       lookAt.x, lookAt.y, lookAt.z,
@@ -252,6 +256,13 @@ void timer(int t){
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
+float calDist(glm::vec3 p1, glm::vec3 p2){
+  return calLen(p1 - p2);
+}
+
+float calLen(glm::vec3 v){
+  return sqrt(v.x*v.x + v.y*v.y + v.z*v.z);
+}
 
 void setVec3(glm::vec3* vec, Mat data){
   vec->x = data.at<float>(0, 0);
