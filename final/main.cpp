@@ -1,4 +1,3 @@
-#include "objects.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,7 +14,6 @@
 using namespace std;
 using namespace cv;
 
-void test();
 void setVec3(glm::vec3*, Mat);
 glm::vec3 cross(glm::vec3, glm::vec3);
 void skyInit(vector<glm::vec3>*, vector< vector<int> >*, vector<glm::vec3>*, float);
@@ -64,7 +62,7 @@ int main(int argc, char* argv[]){
   cameraInit();
   skyInit(&skyVertex, &skyMesh, &skyNormal, radius);
   textureInit(textureSize, &textureF, &textureR, path);
-  //  glGenTextures(2, &textureID[0]);
+  glGenTextures(2, &textureID[0]);
   num = 0;
 
   currentWidth = 1080;
@@ -114,7 +112,6 @@ int main(int argc, char* argv[]){
   glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, &m_Specular[0]);
   glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, m_fShininess);
 
-  test();
   glutReshapeFunc(resizeFunction);
   glutDisplayFunc(render);
   glutMouseFunc(mouseFunc);
@@ -224,31 +221,25 @@ void render(){
   glutPostRedisplay();
 
 }
-void test(){
 
-  //imshow("01", textureF[0]);
-  //waitKey();
-  glGenTextures(2, textureID);
-  //printf("%d\n", textureID[0]);
-  glBindTexture(GL_TEXTURE_2D, textureID[0]);
-  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST); // ( NEW )
-  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST); // ( NEW )
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureSize, textureSize, 0, GL_BGR_EXT , GL_UNSIGNED_BYTE, textureF[num].data);
-
-  glBindTexture(GL_TEXTURE_2D, textureID[1]);
-  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST); // ( NEW )
-  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST); // ( NEW )
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureSize, textureSize, 0, GL_BGR_EXT , GL_UNSIGNED_BYTE, textureR[num].data);
-
-
-}
 void animate(){
 
   glPushMatrix();
-  draw(skyVertex, skyMesh, skyNormal, textureID, radius);
+    //glGenTextures(2, textureID);
+    glBindTexture(GL_TEXTURE_2D, textureID[0]);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST); // ( NEW )
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST); // ( NEW )
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureSize, textureSize, 0, GL_BGR_EXT , GL_UNSIGNED_BYTE, textureF[num].data);
+
+    glBindTexture(GL_TEXTURE_2D, textureID[1]);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST); // ( NEW )
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST); // ( NEW )
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureSize, textureSize, 0, GL_BGR_EXT , GL_UNSIGNED_BYTE, textureR[num].data);
+
+    draw(skyVertex, skyMesh, skyNormal, textureID, radius);
   glPopMatrix();
 
-  //++num %= 61;
+  ++num %= 61;
 
 }
 void timer(int t){
@@ -308,12 +299,10 @@ void skyInit(vector<glm::vec3> *vertex, vector< vector<int> >* mesh, vector<glm:
     if(i % xyCut == 0) tmp2.push_back(1);
     else tmp2.push_back(i + 1);
     tmp2.push_back(i);
-//if(i % xyCut == 0) printf("dfffdddfffdsdsfsdf\n");
     mesh->push_back(tmp2);
   }
   for(int i = 1; i < len; i++){
     vector<int> tmp2;
-
     tmp2.push_back(i);
     if(i % xyCut == 0) tmp2.push_back(i - xyCut + 1);
     else tmp2.push_back(i + 1);
@@ -374,15 +363,15 @@ void draw(vector<glm::vec3> vertex, vector< vector<int> > mesh, vector<glm::vec3
     else glBindTexture(GL_TEXTURE_2D, ID[1]);
 
     glBegin(GL_QUADS);
-    glNormal3fv(&(normal[i].x));
-    glTexCoord2f((vertex[ mesh[i][0] ].x - 0.08) * 0.8 / (2*r) + 0.08, (vertex[ mesh[i][0] ].y - 0.1) * 0.8 / (2*r) + 0.1);
-    glVertex3fv(&(vertex[ mesh[i][0] ].x));
-    glTexCoord2f((vertex[ mesh[i][1] ].x - 0.08) * 0.8 / (2*r) + 0.08, (vertex[ mesh[i][1] ].y - 0.1) * 0.8 / (2*r) + 0.1);
-    glVertex3fv(&(vertex[ mesh[i][1] ].x));
-    glTexCoord2f((vertex[ mesh[i][2] ].x - 0.08) * 0.8 / (2*r) + 0.08, (vertex[ mesh[i][2] ].y - 0.1) * 0.8 / (2*r) + 0.1);
-    glVertex3fv(&(vertex[ mesh[i][2] ].x));
-    glTexCoord2f((vertex[ mesh[i][3] ].x - 0.08) * 0.8 / (2*r) + 0.08, (vertex[ mesh[i][3] ].y - 0.1) * 0.8 / (2*r) + 0.1);
-    glVertex3fv(&(vertex[ mesh[i][3] ].x));
+      glNormal3fv(&(normal[i].x));
+      glTexCoord2f((vertex[ mesh[i][0] ].x + r) * 0.4 / r + 0.07, (vertex[ mesh[i][0] ].y + r) * 0.4 / r + 0.07);
+      glVertex3fv(&(vertex[ mesh[i][0] ].x));
+      glTexCoord2f((vertex[ mesh[i][1] ].x + r) * 0.4 / r + 0.07, (vertex[ mesh[i][1] ].y + r) * 0.4 / r + 0.07);
+      glVertex3fv(&(vertex[ mesh[i][1] ].x));
+      glTexCoord2f((vertex[ mesh[i][2] ].x + r) * 0.4 / r + 0.07, (vertex[ mesh[i][2] ].y + r) * 0.4 / r + 0.07);
+      glVertex3fv(&(vertex[ mesh[i][2] ].x));
+      glTexCoord2f((vertex[ mesh[i][3] ].x + r) * 0.4 / r + 0.07, (vertex[ mesh[i][3] ].y + r) * 0.4 / r + 0.07);
+      glVertex3fv(&(vertex[ mesh[i][3] ].x));
     glEnd();
 
     glDeleteTextures(2, ID);
