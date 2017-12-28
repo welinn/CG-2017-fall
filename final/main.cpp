@@ -38,12 +38,11 @@ int roomAngle = 60;
 double cameraRotAngle = M_PI/2;
 int mouseX, mouseY;
 bool leftButtonDown = false;
-bool rightButtonDown = false;
 
 vector<glm::vec3> skyVertex;
 vector< vector<int> > skyMesh;
 vector<glm::vec3> skyNormal;
-float radius = 100;
+float radius = 10000;
 
 int textureSize = 512;
 vector<Mat> textureF;
@@ -52,7 +51,7 @@ GLuint textureID[2];
 int num;
 
 void cameraInit(){
-  camera.pos = glm::vec3 (0, 0, 500);
+  camera.pos = glm::vec3 (0, 0, 5000);
   camera.up = glm::vec3 (0, 1, 0);
   camera.lookAt = glm::vec3 (0, 0, 0);
 }
@@ -62,7 +61,6 @@ int main(int argc, char* argv[]){
   cameraInit();
   skyInit(&skyVertex, &skyMesh, &skyNormal, radius);
   textureInit(textureSize, &textureF, &textureR, path);
-  glGenTextures(2, &textureID[0]);
   num = 0;
 
   currentWidth = 1080;
@@ -112,6 +110,8 @@ int main(int argc, char* argv[]){
   glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, &m_Specular[0]);
   glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, m_fShininess);
 
+  glGenTextures(2, &textureID[0]);
+
   glutReshapeFunc(resizeFunction);
   glutDisplayFunc(render);
   glutMouseFunc(mouseFunc);
@@ -129,11 +129,18 @@ void resizeFunction(int width, int height){
 }
 
 void mouseFunc(int button, int state, int x, int y){
-  if(button == 3 && roomAngle > 5){
-    roomAngle -= 2;
+  if(button == 3){
+    glm::vec3 dist = camera.pos - glm::vec3(0, 0, 0);
+    if(sqrt(dist.x*dist.x + dist.y*dist.y + dist.z*dist.z) > 106){
+      glm::vec3 tran = camera.lookAt - camera.pos;
+      tran /= sqrt(tran.x*tran.x + tran.y*tran.y + tran.z*tran.z) / 100;
+      camera.pos += tran;
+    }
   }
-  else if(button == 4 && roomAngle < 175){
-    roomAngle += 2;
+  else if(button == 4){
+    glm::vec3 tran = camera.lookAt - camera.pos;
+    tran /= sqrt(tran.x*tran.x + tran.y*tran.y + tran.z*tran.z) / 100;
+    camera.pos -= tran;
   }
   else if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN){
     leftButtonDown = true;
@@ -143,14 +150,6 @@ void mouseFunc(int button, int state, int x, int y){
   else if(button == GLUT_LEFT_BUTTON && state == GLUT_UP){
     leftButtonDown = false;
   }
-  else if(button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN){
-    printf("03\n");
-    rightButtonDown = true;
-  }
-  else if(button == GLUT_RIGHT_BUTTON && state == GLUT_UP){
-    printf("04\n");
-    rightButtonDown = false;
-  }
 }
 
 void mouseMotionFunc(int x, int y){
@@ -158,7 +157,7 @@ void mouseMotionFunc(int x, int y){
   if(leftButtonDown){
     //axis y
     double r = sqrt(camera.pos.x*camera.pos.x + camera.pos.y*camera.pos.y + camera.pos.z*camera.pos.z);
-    double arcLen = (mouseX - x) * 2 * M_PI * r / currentWidth;
+    double arcLen = -(mouseX - x) * 2 * M_PI * r / currentWidth;
     double theta = arcLen / r;
     float data[] = {
       cos(theta), 0, sin(theta), 0,
@@ -168,7 +167,7 @@ void mouseMotionFunc(int x, int y){
     Mat rotY(4, 4, CV_32F, data);
 
     //axis x
-    double arcLen2 = 2 * M_PI * r * (y - mouseY) / currentHeight;
+    double arcLen2 = 2 * M_PI * r * -(y - mouseY) / currentHeight;
     double theta2 = arcLen2 / r;
     if(cameraRotAngle + theta2 < 0) theta2 = -cameraRotAngle;
     else if(cameraRotAngle + theta2 > M_PI) theta2 = M_PI - cameraRotAngle;
@@ -208,9 +207,13 @@ void render(){
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  gluPerspective(roomAngle, (double)currentWidth / currentHeight, 5, 4000);
+  gluPerspective(roomAngle, (double)currentWidth / currentHeight, 5, 25000);
+
+  glm::vec3 lookAt = camera.lookAt - camera.pos;
+  lookAt /= sqrt(lookAt.x*lookAt.x + lookAt.y*lookAt.y + lookAt.z*lookAt.z) / radius;
+  lookAt += camera.pos;
   gluLookAt(camera.pos.x, camera.pos.y, camera.pos.z,
-      camera.lookAt.x, camera.lookAt.y, camera.lookAt.z,
+      lookAt.x, lookAt.y, lookAt.z,
       camera.up.x, camera.up.y, camera.up.z);
   glMatrixMode(GL_MODELVIEW);
 
@@ -225,7 +228,8 @@ void render(){
 void animate(){
 
   glPushMatrix();
-    //glGenTextures(2, textureID);
+//    glGenTextures(2, textureID);
+
     glBindTexture(GL_TEXTURE_2D, textureID[0]);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST); // ( NEW )
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST); // ( NEW )
@@ -355,26 +359,42 @@ void textureInit(int size, vector<Mat> *tF, vector<Mat> *tR, char *path){
 void draw(vector<glm::vec3> vertex, vector< vector<int> > mesh, vector<glm::vec3> normal, GLuint *ID, float r){
 
   int len = mesh.size();
-  for(int i = 0; i < len/*125*/; i++){
+  float x1, x2, x3, x4;
+  for(int i = 0; i < len; i++){
 
     glEnable(GL_TEXTURE_2D);
 
-    if(vertex[ mesh[i][0] ].z < 0) glBindTexture(GL_TEXTURE_2D, ID[0]);
-    else glBindTexture(GL_TEXTURE_2D, ID[1]);
+
+    if(vertex[ mesh[i][0] ].z < 0){
+      glBindTexture(GL_TEXTURE_2D, ID[0]);
+      x1  = -((vertex[ mesh[i][0] ].x + r) * 0.4 / r + 0.075);
+      x2  = -((vertex[ mesh[i][1] ].x + r) * 0.4 / r + 0.075);
+      x3  = -((vertex[ mesh[i][2] ].x + r) * 0.4 / r + 0.075);
+      x4  = -((vertex[ mesh[i][3] ].x + r) * 0.4 / r + 0.075);
+    }
+
+    else{
+      glBindTexture(GL_TEXTURE_2D, ID[1]);
+      x1 = (vertex[ mesh[i][0] ].x + r) * 0.4 / r + 0.125;
+      x2 = (vertex[ mesh[i][1] ].x + r) * 0.4 / r + 0.125;
+      x3 = (vertex[ mesh[i][2] ].x + r) * 0.4 / r + 0.125;
+      x4 = (vertex[ mesh[i][3] ].x + r) * 0.4 / r + 0.125;
+    }
 
     glBegin(GL_QUADS);
       glNormal3fv(&(normal[i].x));
-      glTexCoord2f((vertex[ mesh[i][0] ].x + r) * 0.4 / r + 0.07, (vertex[ mesh[i][0] ].y + r) * 0.4 / r + 0.07);
+      glTexCoord2f(x1, (vertex[ mesh[i][0] ].y + r) * 0.4 / r + 0.07);
       glVertex3fv(&(vertex[ mesh[i][0] ].x));
-      glTexCoord2f((vertex[ mesh[i][1] ].x + r) * 0.4 / r + 0.07, (vertex[ mesh[i][1] ].y + r) * 0.4 / r + 0.07);
+      glTexCoord2f(x2, (vertex[ mesh[i][1] ].y + r) * 0.4 / r + 0.07);
       glVertex3fv(&(vertex[ mesh[i][1] ].x));
-      glTexCoord2f((vertex[ mesh[i][2] ].x + r) * 0.4 / r + 0.07, (vertex[ mesh[i][2] ].y + r) * 0.4 / r + 0.07);
+      glTexCoord2f(x3, (vertex[ mesh[i][2] ].y + r) * 0.4 / r + 0.07);
       glVertex3fv(&(vertex[ mesh[i][2] ].x));
-      glTexCoord2f((vertex[ mesh[i][3] ].x + r) * 0.4 / r + 0.07, (vertex[ mesh[i][3] ].y + r) * 0.4 / r + 0.07);
+      glTexCoord2f(x4, (vertex[ mesh[i][3] ].y + r) * 0.4 / r + 0.07);
       glVertex3fv(&(vertex[ mesh[i][3] ].x));
     glEnd();
 
-    glDeleteTextures(2, ID);
     glDisable(GL_TEXTURE_2D);
   }
+    glDeleteTextures(2, ID);
+
 }
