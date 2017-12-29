@@ -19,6 +19,7 @@ void render();
 void resizeFunction(int, int);
 void mouseFunc(int, int, int, int);
 void mouseMotionFunc(int, int);
+void keyboardFunc(unsigned char, int, int);
 void timer(int);
 /////////////////////////////////////////////////////
 void setVec3(glm::vec3*, Mat);
@@ -41,6 +42,7 @@ int roomAngle = 60;
 double cameraRotAngle = M_PI/2;
 int mouseX, mouseY;
 bool leftButtonDown = false;
+bool videoPlay = true;
 
 vector<glm::vec3> skyVertex;
 vector< vector<int> > skyMesh;
@@ -119,6 +121,7 @@ int main(int argc, char* argv[]){
   glutDisplayFunc(render);
   glutMouseFunc(mouseFunc);
   glutMotionFunc(mouseMotionFunc);
+  glutKeyboardFunc(keyboardFunc);
   glutTimerFunc(20, timer, 0);
   glutMainLoop();
 
@@ -205,6 +208,15 @@ void mouseMotionFunc(int x, int y){
   glutPostRedisplay();
 }
 
+void keyboardFunc(unsigned char key, int x, int y){
+  printf("keyboard: %d\n", key);
+  if(key == 32) videoPlay = !videoPlay; //space
+  else if(key == 'r' || key == 'R'){
+    cameraInit();
+    glutPostRedisplay();
+  }
+}
+
 void render(){
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glViewport(0, 0, currentWidth, currentHeight);
@@ -232,8 +244,7 @@ void render(){
 void animate(){
 
   glPushMatrix();
-//    glGenTextures(2, textureID);
-
+    //glGenTextures(2, textureID);
     glBindTexture(GL_TEXTURE_2D, textureID[0]);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST); // ( NEW )
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST); // ( NEW )
@@ -247,9 +258,9 @@ void animate(){
     draw(skyVertex, skyMesh, skyNormal, textureID, radius);
   glPopMatrix();
 
-  ++num %= 61;
-
+  if(videoPlay) ++num %= 61;
 }
+
 void timer(int t){
   glutTimerFunc(50, timer, t + 1);
   glutPostRedisplay();
@@ -306,7 +317,6 @@ void skyInit(vector<glm::vec3> *vertex, vector< vector<int> >* mesh, vector<glm:
   int zCut = M_PI / 0.1;
   int len = vertex->size() - 1;
 
-
   for(int i = 1; i <= xyCut; i++){
     vector<int> tmp2;
     tmp2.push_back(0);
@@ -347,7 +357,6 @@ void skyInit(vector<glm::vec3> *vertex, vector< vector<int> >* mesh, vector<glm:
 }
 
 void textureInit(int size, vector<Mat> *tF, vector<Mat> *tR, char *path){
-
   char p[20];
   Mat img;
   for(int i = 0; i < 61; i++){
@@ -368,13 +377,11 @@ void textureInit(int size, vector<Mat> *tF, vector<Mat> *tR, char *path){
 }
 
 void draw(vector<glm::vec3> vertex, vector< vector<int> > mesh, vector<glm::vec3> normal, GLuint *ID, float r){
-
   int len = mesh.size();
   float x1, x2, x3, x4, y1, y2, y3, y4;
+
   for(int i = 0; i < len; i++){
-
     glEnable(GL_TEXTURE_2D);
-
 
     if(vertex[ mesh[i][0] ].z < 0){
       glBindTexture(GL_TEXTURE_2D, ID[0]);
@@ -387,7 +394,6 @@ void draw(vector<glm::vec3> vertex, vector< vector<int> > mesh, vector<glm::vec3
       y3 = (vertex[ mesh[i][2] ].y + r) * 0.34 / r + 0.1;
       y4 = (vertex[ mesh[i][3] ].y + r) * 0.34 / r + 0.1;
     }
-
     else{
       glBindTexture(GL_TEXTURE_2D, ID[1]);
       x1 = (vertex[ mesh[i][0] ].x + r) * 0.4 / r + 0.163;
@@ -399,21 +405,15 @@ void draw(vector<glm::vec3> vertex, vector< vector<int> > mesh, vector<glm::vec3
       y3 = (vertex[ mesh[i][2] ].y + r) * 0.34 / r + 0.085;
       y4 = (vertex[ mesh[i][3] ].y + r) * 0.34 / r + 0.085;
     }
-
     glBegin(GL_QUADS);
       glNormal3fv(&(normal[i].x));
-      glTexCoord2f(x1, y1);
-      glVertex3fv(&(vertex[ mesh[i][0] ].x));
-      glTexCoord2f(x2, y2);
-      glVertex3fv(&(vertex[ mesh[i][1] ].x));
-      glTexCoord2f(x3, y3);
-      glVertex3fv(&(vertex[ mesh[i][2] ].x));
-      glTexCoord2f(x4, y4);
-      glVertex3fv(&(vertex[ mesh[i][3] ].x));
+      glTexCoord2f(x1, y1);  glVertex3fv(&(vertex[ mesh[i][0] ].x));
+      glTexCoord2f(x2, y2);  glVertex3fv(&(vertex[ mesh[i][1] ].x));
+      glTexCoord2f(x3, y3);  glVertex3fv(&(vertex[ mesh[i][2] ].x));
+      glTexCoord2f(x4, y4);  glVertex3fv(&(vertex[ mesh[i][3] ].x));
     glEnd();
 
     glDisable(GL_TEXTURE_2D);
   }
-    glDeleteTextures(2, ID);
-
+  glDeleteTextures(2, ID);
 }
