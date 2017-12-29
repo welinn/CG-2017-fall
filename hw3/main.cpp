@@ -121,7 +121,6 @@ void saveImg(bool save){
         y += currentWidth;
         x = currentHeight * (rate - 1);
       }
-//      printf("x: %d, y: %d\n", x, y);
       roi.x = y;
       roi.y = x;
       dstData[i].copyTo(dst(roi));

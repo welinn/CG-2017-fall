@@ -278,7 +278,6 @@ void drawObj(objects obj, bool color){
         }
         glVertex3fv(p3);
       glEnd();
-
 /*
       glBegin(GL_LINES);
 
