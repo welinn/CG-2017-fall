@@ -30,6 +30,7 @@ void draw(vector<glm::vec3>, vector< vector<int> >, vector<glm::vec3>, GLuint*, 
 float calDist(glm::vec3, glm::vec3);
 float calLen(glm::vec3);
 
+
 typedef struct {
   glm::vec3 pos;
   glm::vec3 up;
@@ -52,8 +53,13 @@ float radius = 10000;
 int textureSize = 512;
 vector<Mat> textureF;
 vector<Mat> textureR;
+float u1 = 0.167, v1 = 0.14;
+float u2 = 0.169, v2 = 0.08;
+float uHalfSize1 = 0.4, vHalfSize1 = 0.36;
+float uHalfSize2 = 0.4, vHalfSize2 = 0.41;
 GLuint textureID[2];
 int num;
+
 
 void cameraInit(){
   camera.pos = glm::vec3 (0, 0, 5000);
@@ -90,6 +96,7 @@ int main(int argc, char* argv[]){
 
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_COLOR_MATERIAL);
+/*
   glEnable(GL_LIGHTING);
   glEnable(GL_LIGHT0);
   GLfloat MaterialAmbient[] = {0.4, 0.4, 0.4, 1.0f};
@@ -114,8 +121,8 @@ int main(int argc, char* argv[]){
   glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, &m_Diffuse[0]);
   glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, &m_Specular[0]);
   glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, m_fShininess);
-
-  glGenTextures(2, &textureID[0]);
+*/
+//  glGenTextures(2, &textureID[0]);
 
   glutReshapeFunc(resizeFunction);
   glutDisplayFunc(render);
@@ -244,7 +251,7 @@ void render(){
 void animate(){
 
   glPushMatrix();
-    //glGenTextures(2, textureID);
+    glGenTextures(2, textureID);
     glBindTexture(GL_TEXTURE_2D, textureID[0]);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST); // ( NEW )
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST); // ( NEW )
@@ -256,6 +263,8 @@ void animate(){
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureSize, textureSize, 0, GL_BGR_EXT , GL_UNSIGNED_BYTE, textureR[num].data);
 
     draw(skyVertex, skyMesh, skyNormal, textureID, radius);
+    glDeleteTextures(2, textureID);
+
   glPopMatrix();
 
   if(videoPlay) ++num %= 61;
@@ -385,25 +394,25 @@ void draw(vector<glm::vec3> vertex, vector< vector<int> > mesh, vector<glm::vec3
 
     if(vertex[ mesh[i][0] ].z < 0){
       glBindTexture(GL_TEXTURE_2D, ID[0]);
-      x1  = ((-vertex[ mesh[i][0] ].x + r) * 0.415 / r + 0.163);
-      x2  = ((-vertex[ mesh[i][1] ].x + r) * 0.415 / r + 0.163);
-      x3  = ((-vertex[ mesh[i][2] ].x + r) * 0.415 / r + 0.163);
-      x4  = ((-vertex[ mesh[i][3] ].x + r) * 0.415 / r + 0.163);
-      y1 = (vertex[ mesh[i][0] ].y + r) * 0.34 / r + 0.1;
-      y2 = (vertex[ mesh[i][1] ].y + r) * 0.34 / r + 0.1;
-      y3 = (vertex[ mesh[i][2] ].y + r) * 0.34 / r + 0.1;
-      y4 = (vertex[ mesh[i][3] ].y + r) * 0.34 / r + 0.1;
+      x1  = ((-vertex[ mesh[i][0] ].x + r) * uHalfSize1 / r + u1);
+      x2  = ((-vertex[ mesh[i][1] ].x + r) * uHalfSize1 / r + u1);
+      x3  = ((-vertex[ mesh[i][2] ].x + r) * uHalfSize1 / r + u1);
+      x4  = ((-vertex[ mesh[i][3] ].x + r) * uHalfSize1 / r + u1);
+      y1 = (vertex[ mesh[i][0] ].y + r) * vHalfSize1 / r + v1;
+      y2 = (vertex[ mesh[i][1] ].y + r) * vHalfSize1 / r + v1;
+      y3 = (vertex[ mesh[i][2] ].y + r) * vHalfSize1 / r + v1;
+      y4 = (vertex[ mesh[i][3] ].y + r) * vHalfSize1 / r + v1;
     }
     else{
       glBindTexture(GL_TEXTURE_2D, ID[1]);
-      x1 = (vertex[ mesh[i][0] ].x + r) * 0.4 / r + 0.163;
-      x2 = (vertex[ mesh[i][1] ].x + r) * 0.4 / r + 0.163;
-      x3 = (vertex[ mesh[i][2] ].x + r) * 0.4 / r + 0.163;
-      x4 = (vertex[ mesh[i][3] ].x + r) * 0.4 / r + 0.163;
-      y1 = (vertex[ mesh[i][0] ].y + r) * 0.34 / r + 0.085;
-      y2 = (vertex[ mesh[i][1] ].y + r) * 0.34 / r + 0.085;
-      y3 = (vertex[ mesh[i][2] ].y + r) * 0.34 / r + 0.085;
-      y4 = (vertex[ mesh[i][3] ].y + r) * 0.34 / r + 0.085;
+      x1 = (vertex[ mesh[i][0] ].x + r) * uHalfSize2 / r + u2;
+      x2 = (vertex[ mesh[i][1] ].x + r) * uHalfSize2 / r + u2;
+      x3 = (vertex[ mesh[i][2] ].x + r) * uHalfSize2 / r + u2;
+      x4 = (vertex[ mesh[i][3] ].x + r) * uHalfSize2 / r + u2;
+      y1 = (vertex[ mesh[i][0] ].y + r) * vHalfSize2 / r + v2;
+      y2 = (vertex[ mesh[i][1] ].y + r) * vHalfSize2 / r + v2;
+      y3 = (vertex[ mesh[i][2] ].y + r) * vHalfSize2 / r + v2;
+      y4 = (vertex[ mesh[i][3] ].y + r) * vHalfSize2 / r + v2;
     }
     glBegin(GL_QUADS);
       glNormal3fv(&(normal[i].x));
@@ -415,5 +424,4 @@ void draw(vector<glm::vec3> vertex, vector< vector<int> > mesh, vector<glm::vec3
 
     glDisable(GL_TEXTURE_2D);
   }
-  glDeleteTextures(2, ID);
 }
